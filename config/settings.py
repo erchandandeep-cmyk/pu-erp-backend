@@ -109,6 +109,18 @@ if not DEBUG:
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
 
+# Render (and most hosts) terminate HTTPS at a proxy and forward plain
+# HTTP internally - without this, Django can't tell the original
+# request was secure, and SECURE_SSL_REDIRECT above causes an endless
+# redirect loop.
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+# Needed for the web login form (session + CSRF) to work once this is
+# served from a real https:// domain instead of 127.0.0.1.
+CSRF_TRUSTED_ORIGINS = [
+    o.strip() for o in os.environ.get("DJANGO_CSRF_TRUSTED_ORIGINS", "").split(",") if o.strip()
+]
+
 
 # API authentication for the Android application.
 REST_FRAMEWORK = {
