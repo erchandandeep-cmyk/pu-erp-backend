@@ -1,0 +1,548 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - ME-ERP{% endblock %}
+
+{% block content %}
+
+<!-- =====================================================
+     DASHBOARD HEADER
+====================================================== -->
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+  <div>
+    <h2 class="mb-1">Dashboard</h2>
+
+    <p class="text-muted mb-0">
+      Mechanical Department ERP
+    </p>
+  </div>
+
+  <a
+    href="{% url 'create_application' %}"
+    class="btn btn-primary"
+  >
+    + New Application
+  </a>
+
+</div>
+
+
+<!-- =====================================================
+     STATISTICS
+====================================================== -->
+
+<div class="row g-3 mb-4">
+
+  <!-- TOTAL -->
+
+  <div class="col-md-6 col-lg-3">
+
+    <div class="card card-stat shadow-sm h-100">
+
+      <div class="card-body">
+
+        <div class="text-muted">
+          Total Applications
+        </div>
+
+        <h2 class="mb-0 mt-2">
+          {{ total }}
+        </h2>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- PENDING -->
+
+  <div class="col-md-6 col-lg-3">
+
+    <div class="card card-stat shadow-sm h-100">
+
+      <div class="card-body">
+
+        <div class="text-muted">
+          Pending
+        </div>
+
+        <h2 class="mb-0 mt-2">
+          {{ pending }}
+        </h2>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- APPROVED -->
+
+  <div class="col-md-6 col-lg-3">
+
+    <div class="card card-stat shadow-sm h-100">
+
+      <div class="card-body">
+
+        <div class="text-muted">
+          Approved
+        </div>
+
+        <h2 class="mb-0 mt-2">
+          {{ approved }}
+        </h2>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- REJECTED -->
+
+  <div class="col-md-6 col-lg-3">
+
+    <div class="card card-stat shadow-sm h-100">
+
+      <div class="card-body">
+
+        <div class="text-muted">
+          Rejected
+        </div>
+
+        <h2 class="mb-0 mt-2">
+          {{ rejected }}
+        </h2>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+<!-- =====================================================
+     COMPLETED + NOTIFICATION SUMMARY
+====================================================== -->
+
+<div class="row g-3 mb-4">
+
+  <!-- COMPLETED -->
+
+  <div class="col-md-6">
+
+    <div class="card shadow-sm border-0">
+
+      <div class="card-body d-flex justify-content-between align-items-center">
+
+        <div>
+
+          <div class="text-muted">
+            Completed Applications
+          </div>
+
+          <h3 class="mb-0 mt-1">
+            {{ completed }}
+          </h3>
+
+        </div>
+
+        <div class="fs-2">
+          ✅
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- NOTIFICATIONS -->
+
+  <div class="col-md-6">
+
+    <div class="card shadow-sm border-0">
+
+      <div class="card-body d-flex justify-content-between align-items-center">
+
+        <div>
+
+          <div class="text-muted">
+            Unread Notifications
+          </div>
+
+          <h3 class="mb-0 mt-1">
+            {{ unread_notification_count }}
+          </h3>
+
+        </div>
+
+        <div class="fs-2">
+          🔔
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+<!-- =====================================================
+     MAIN CONTENT
+====================================================== -->
+
+<div class="row g-4">
+
+
+  <!-- ===================================================
+       RECENT APPLICATIONS
+  ==================================================== -->
+
+  <div class="col-lg-8">
+
+    <div class="card shadow-sm border-0">
+
+      <div class="card-body">
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+
+          <div>
+
+            <h5 class="mb-1">
+              Recent Applications
+            </h5>
+
+            <small class="text-muted">
+              Latest applications in the system
+            </small>
+
+          </div>
+
+          <a
+            href="{% url 'application_list' %}"
+            class="btn btn-sm btn-outline-primary"
+          >
+            View All
+          </a>
+
+        </div>
+
+
+        <div class="table-responsive">
+
+          <table class="table table-hover align-middle mb-0">
+
+            <thead>
+
+              <tr>
+
+                <th>ID</th>
+
+                <th>Subject</th>
+
+                {% if user.role != "STUDENT" %}
+                <th>Applicant</th>
+                {% endif %}
+
+                <th>Status</th>
+
+                <th>Date</th>
+
+              </tr>
+
+            </thead>
+
+
+            <tbody>
+
+              {% for a in recent_applications %}
+
+              <tr>
+
+                <td>
+
+                  <a
+                    href="{% url 'application_detail' a.pk %}"
+                    class="text-decoration-none fw-semibold"
+                  >
+                    {{ a.application_id }}
+                  </a>
+
+                </td>
+
+
+                <td>
+
+                  {{ a.subject }}
+
+                </td>
+
+
+                {% if user.role != "STUDENT" %}
+
+                <td>
+
+                  {{ a.applicant.display_name }}
+
+                </td>
+
+                {% endif %}
+
+
+                <td>
+
+                  {% if a.status == "APPROVED" or a.status == "COMPLETED" %}
+
+                    <span class="badge bg-success">
+                      {{ a.get_status_display }}
+                    </span>
+
+                  {% elif a.status == "REJECTED" %}
+
+                    <span class="badge bg-danger">
+                      {{ a.get_status_display }}
+                    </span>
+
+                  {% elif a.status == "FORWARDED" %}
+
+                    <span class="badge bg-info text-dark">
+                      {{ a.get_status_display }}
+                    </span>
+
+                  {% elif a.status == "UNDER_REVIEW" %}
+
+                    <span class="badge bg-warning text-dark">
+                      {{ a.get_status_display }}
+                    </span>
+
+                  {% else %}
+
+                    <span class="badge bg-secondary">
+                      {{ a.get_status_display }}
+                    </span>
+
+                  {% endif %}
+
+                </td>
+
+
+                <td>
+
+                  <small>
+                    {{ a.created_at|date:"d M Y" }}
+                  </small>
+
+                </td>
+
+              </tr>
+
+              {% empty %}
+
+              <tr>
+
+                <td
+                  colspan="{% if user.role == 'STUDENT' %}4{% else %}5{% endif %}"
+                  class="text-center text-muted py-4"
+                >
+
+                  No applications yet.
+
+                </td>
+
+              </tr>
+
+              {% endfor %}
+
+            </tbody>
+
+          </table>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- ===================================================
+       RIGHT SIDE
+  ==================================================== -->
+
+  <div class="col-lg-4">
+
+
+    <!-- =================================================
+         NOTIFICATIONS
+    ================================================== -->
+
+    <div class="card shadow-sm border-0 mb-4">
+
+      <div class="card-body">
+
+        <div class="d-flex justify-content-between align-items-center mb-2">
+
+          <h5 class="mb-0">
+            🔔 Notifications
+          </h5>
+
+          {% if unread_notification_count > 0 %}
+
+          <span class="badge bg-danger">
+
+            {{ unread_notification_count }} new
+
+          </span>
+
+          {% endif %}
+
+        </div>
+
+
+        {% for n in notifications %}
+
+        <div class="border-bottom py-3">
+
+          {% if n.link %}
+
+          <a
+            href="{{ n.link }}"
+            class="text-decoration-none"
+          >
+
+            <strong>
+              {{ n.title }}
+            </strong>
+
+          </a>
+
+          {% else %}
+
+          <strong>
+            {{ n.title }}
+          </strong>
+
+          {% endif %}
+
+
+          <br>
+
+
+          <small class="text-muted">
+
+            {{ n.message }}
+
+          </small>
+
+
+          <br>
+
+
+          <small class="text-secondary">
+
+            {{ n.created_at|date:"d M Y, h:i A" }}
+
+          </small>
+
+        </div>
+
+
+        {% empty %}
+
+        <div class="py-3">
+
+          <p class="text-muted mb-0">
+
+            No unread notifications.
+
+          </p>
+
+        </div>
+
+        {% endfor %}
+
+      </div>
+
+    </div>
+
+
+    <!-- =================================================
+         ANNOUNCEMENTS
+    ================================================== -->
+
+    <div class="card shadow-sm border-0">
+
+      <div class="card-body">
+
+        <div class="d-flex justify-content-between align-items-center mb-2">
+
+          <h5 class="mb-0">
+            📢 Announcements
+          </h5>
+
+          <a
+            href="{% url 'announcement_list' %}"
+            class="btn btn-sm btn-outline-secondary"
+          >
+            View All
+          </a>
+
+        </div>
+
+
+        {% for a in announcements %}
+
+        <div class="border-bottom py-3">
+
+          <strong>
+            {{ a.title }}
+          </strong>
+
+          <br>
+
+          <small class="text-muted">
+
+            {{ a.published_at|date:"d M Y" }}
+
+          </small>
+
+        </div>
+
+
+        {% empty %}
+
+        <div class="py-3">
+
+          <p class="text-muted mb-0">
+
+            No announcements.
+
+          </p>
+
+        </div>
+
+        {% endfor %}
+
+      </div>
+
+    </div>
+
+
+  </div>
+
+</div>
+
+
+{% endblock %}

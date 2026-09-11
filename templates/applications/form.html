@@ -1,0 +1,282 @@
+{% extends "base.html" %}
+
+{% block title %}
+New Application - ME-ERP
+{% endblock %}
+
+
+{% block content %}
+
+<div class="container-fluid px-0">
+
+  <!-- =================================================
+       PAGE HEADER
+  ================================================== -->
+
+  <div class="mb-4">
+
+    <h2 class="fw-bold mb-1">
+      New Application
+    </h2>
+
+    <p class="text-muted mb-0">
+      Submit a new application to the concerned authority.
+    </p>
+
+  </div>
+
+
+  <!-- =================================================
+       APPLICATION CARD
+  ================================================== -->
+
+  <div class="card shadow-sm border-0">
+
+    <div class="card-body p-4">
+
+
+      <form
+        method="post"
+        enctype="multipart/form-data"
+      >
+
+        {% csrf_token %}
+
+
+        <!-- =================================================
+             FORM ERRORS
+        ================================================== -->
+
+        {% if form.non_field_errors %}
+
+        <div class="alert alert-danger">
+
+          {% for error in form.non_field_errors %}
+
+            <div>
+              {{ error }}
+            </div>
+
+          {% endfor %}
+
+        </div>
+
+        {% endif %}
+
+
+        <!-- =================================================
+             APPLICATION TYPE
+        ================================================== -->
+
+        <div class="mb-3">
+
+          <label
+            for="{{ form.application_type.id_for_label }}"
+            class="form-label fw-semibold"
+          >
+            Application Type
+          </label>
+
+
+          {{ form.application_type }}
+
+
+          {% if form.application_type.errors %}
+
+          <div class="text-danger small mt-1">
+
+            {{ form.application_type.errors }}
+
+          </div>
+
+          {% endif %}
+
+        </div>
+
+
+        <!-- =================================================
+             SUBJECT
+        ================================================== -->
+
+        <div class="mb-3">
+
+          <label
+            for="{{ form.subject.id_for_label }}"
+            class="form-label fw-semibold"
+          >
+            Subject
+          </label>
+
+
+          {{ form.subject }}
+
+
+          {% if form.subject.errors %}
+
+          <div class="text-danger small mt-1">
+
+            {{ form.subject.errors }}
+
+          </div>
+
+          {% endif %}
+
+        </div>
+
+
+        <!-- =================================================
+             APPLICATION DETAILS
+        ================================================== -->
+
+        <div class="mb-3">
+
+          <label
+            for="{{ form.body.id_for_label }}"
+            class="form-label fw-semibold"
+          >
+            Application Details
+          </label>
+
+
+          {{ form.body }}
+
+
+          {% if form.body.errors %}
+
+          <div class="text-danger small mt-1">
+
+            {{ form.body.errors }}
+
+          </div>
+
+          {% endif %}
+
+        </div>
+
+
+        <!-- =================================================
+             AUTHORITY
+        ================================================== -->
+
+        <div class="mb-3">
+
+          <label
+            for="{{ form.authority.id_for_label }}"
+            class="form-label fw-semibold"
+          >
+            Authority
+          </label>
+
+
+          {{ form.authority }}
+
+
+          {% if form.authority.errors %}
+
+          <div class="text-danger small mt-1">
+
+            {{ form.authority.errors }}
+
+          </div>
+
+          {% endif %}
+
+
+          <div class="form-text">
+
+            Search by employee name, role, or department.
+
+          </div>
+
+        </div>
+
+
+        <!-- =================================================
+             ATTACHMENT
+        ================================================== -->
+
+        <div class="mb-4">
+
+          <label
+            for="{{ form.attachment.id_for_label }}"
+            class="form-label fw-semibold"
+          >
+            Attachment
+          </label>
+
+
+          {{ form.attachment }}
+
+
+          {% if form.attachment.errors %}
+
+          <div class="text-danger small mt-1">
+
+            {{ form.attachment.errors }}
+
+          </div>
+
+          {% endif %}
+
+        </div>
+
+
+        <!-- =================================================
+             BUTTONS
+        ================================================== -->
+
+        <div class="d-flex gap-2">
+
+          <button
+            type="submit"
+            class="btn btn-primary px-4"
+          >
+            Submit Application
+          </button>
+
+
+          <a
+            href="{% url 'application_list' %}"
+            class="btn btn-secondary px-4"
+          >
+            Cancel
+          </a>
+
+        </div>
+
+
+      </form>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+{% endblock %}
+
+
+{% block extra_js %}
+
+<script>
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    $(".authority-select").select2({
+
+        placeholder: "Search authority by name or role...",
+
+        allowClear: true,
+
+        width: "100%",
+
+        minimumResultsForSearch: 0
+
+    });
+
+});
+
+</script>
+
+{% endblock %}

@@ -1,0 +1,17 @@
+ME-ERP FINAL SETUP
+==================
+1. Create/activate .venv.
+2. python -m pip install -r requirements.txt
+3. python manage.py makemigrations
+4. python manage.py migrate
+5. python manage.py createsuperuser
+6. python manage.py runserver
+7. Log in at http://127.0.0.1:8000/accounts/login/
+8. A user with role STAFF/HOD/ADMIN can open Import Users and upload sample_users.csv.
+9. Android emulator uses http://10.0.2.2:8000/api/. A physical phone must use your PC LAN IP or a deployed HTTPS API URL.
+10. Do not use sample passwords in production. Change the Django secret key and deploy behind HTTPS.
+
+CSV required columns: username,password,role,name
+Optional: user_id,email,phone,semester,section,department
+Allowed imported roles: STUDENT, TEACHER, STAFF, HOD
+ADMIN accounts should be created/managed by Django superuser/admin.

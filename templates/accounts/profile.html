@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+    <div>
+        <h2>My Profile</h2>
+        <p class="text-muted mb-0">
+            View and manage your profile information
+        </p>
+    </div>
+
+</div>
+
+
+<!-- ===================================================== -->
+<!-- PROFILE INFORMATION -->
+<!-- ===================================================== -->
+
+<div class="card shadow-sm border-0 mb-4">
+
+    <div class="card-body">
+
+        <h5 class="mb-3">
+            Profile Information
+        </h5>
+
+        <p>
+            <strong>Name:</strong>
+            {{ user.display_name }}
+        </p>
+
+        <p>
+            <strong>User ID:</strong>
+            {{ user.employee_or_student_id|default:user.username }}
+        </p>
+
+        <p>
+            <strong>Role:</strong>
+            {{ user.get_role_display }}
+        </p>
+
+        <p>
+            <strong>Department / Org Unit:</strong>
+            {{ user.org_unit.name|default:user.department }}
+        </p>
+
+        <p>
+            <strong>Phone:</strong>
+            {{ user.phone|default:"—" }}
+        </p>
+
+        <p>
+            <strong>Semester:</strong>
+            {{ user.semester|default:"—" }}
+        </p>
+
+        <p class="mb-0">
+            <strong>Section:</strong>
+            {{ user.section|default:"—" }}
+        </p>
+
+    </div>
+
+</div>
+
+
+<!-- ===================================================== -->
+<!-- SIGNATURE -->
+<!-- ===================================================== -->
+
+<div class="card shadow-sm border-0">
+
+    <div class="card-body">
+
+        <h5 class="mb-2">
+            Digital Signature
+        </h5>
+
+        <p class="text-muted">
+            Upload your signature image. This signature can later
+            be used on the printed application document.
+        </p>
+
+
+        <!-- ================================================= -->
+        <!-- CURRENT SIGNATURE -->
+        <!-- ================================================= -->
+
+        {% if user.signature %}
+
+            <div class="mb-4">
+
+                <p class="mb-2">
+                    <strong>Current Signature:</strong>
+                </p>
+
+                <div
+                    class="border rounded p-3 bg-light d-inline-block"
+                >
+
+                    <img
+                        src="{{ user.signature.url }}"
+                        alt="Current Signature"
+                        style="
+                            max-width: 300px;
+                            max-height: 120px;
+                            object-fit: contain;
+                        "
+                    >
+
+                </div>
+
+            </div>
+
+        {% else %}
+
+            <div class="alert alert-warning">
+
+                No signature has been uploaded yet.
+
+            </div>
+
+        {% endif %}
+
+
+        <!-- ================================================= -->
+        <!-- UPLOAD / REPLACE SIGNATURE -->
+        <!-- ================================================= -->
+
+        <form
+            method="post"
+            enctype="multipart/form-data"
+        >
+
+            {% csrf_token %}
+
+            <div class="mb-3">
+
+                <label
+                    for="signature"
+                    class="form-label"
+                >
+
+                    <strong>
+                        {% if user.signature %}
+                            Replace Signature
+                        {% else %}
+                            Upload Signature
+                        {% endif %}
+                    </strong>
+
+                </label>
+
+                <input
+                    type="file"
+                    name="signature"
+                    id="signature"
+                    class="form-control"
+                    accept="image/*"
+                    required
+                >
+
+                <div class="form-text">
+                    Please upload a clear image of your signature.
+                </div>
+
+            </div>
+
+
+            <button
+                type="submit"
+                class="btn btn-primary"
+            >
+
+                {% if user.signature %}
+                    Replace Signature
+                {% else %}
+                    Upload Signature
+                {% endif %}
+
+            </button>
+
+        </form>
+
+    </div>
+
+</div>
+
+{% endblock %}

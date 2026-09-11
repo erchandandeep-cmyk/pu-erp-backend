@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>My Documents</h2>
+<div class="card shadow-sm border-0 mt-3"><div class="card-body">
+<table class="table"><thead><tr><th>Title</th><th>Uploaded</th><th>Type</th></tr></thead><tbody>
+{% for d in documents %}<tr><td><a href="{{ d.file.url }}">{{ d.title }}</a></td><td>{{ d.uploaded_at|date:"d M Y" }}</td><td>{% if d.is_official %}Official{% else %}Personal{% endif %}</td></tr>{% empty %}<tr><td colspan="3">No documents uploaded.</td></tr>{% endfor %}
+</tbody></table>
+</div></div>
+{% endblock %}

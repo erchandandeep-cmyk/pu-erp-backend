@@ -1,0 +1,5 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>New Announcement</h2>
+<div class="card shadow-sm border-0 mt-3"><div class="card-body"><form method="post" enctype="multipart/form-data">{% csrf_token %}{{ form.as_p }}<button class="btn btn-primary">Publish</button></form></div></div>
+{% endblock %}

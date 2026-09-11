@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3"><h2>Announcements</h2>{% if user.role != "STUDENT" %}<a href="{% url 'create_announcement' %}" class="btn btn-primary">New Announcement</a>{% endif %}</div>
+{% for a in announcements %}
+<div class="card shadow-sm border-0 mb-3"><div class="card-body"><h5>{{ a.title }}</h5><p class="text-muted">{{ a.published_at|date:"d M Y H:i" }} · {{ a.published_by.display_name }}</p><p>{{ a.body|linebreaksbr }}</p>{% if a.attachment %}<a href="{{ a.attachment.url }}">Download attachment</a>{% endif %}</div></div>
+{% empty %}<p>No announcements.</p>{% endfor %}
+{% endblock %}
