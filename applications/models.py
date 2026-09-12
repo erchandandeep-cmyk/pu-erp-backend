@@ -28,6 +28,15 @@ class ApplicationType(models.Model):
         default="HOD",
     )
 
+    route_to_admin_office = models.BooleanField(
+        default=False,
+        help_text="If checked, this application type is routed to a "
+        "university-wide administrative office (e.g. Finance, "
+        "Registrar) matching the role above, instead of someone in "
+        "the applicant's own department. Use this for things like "
+        "Purchase Requests that always go to a central office.",
+    )
+
     active = models.BooleanField(
         default=True
     )

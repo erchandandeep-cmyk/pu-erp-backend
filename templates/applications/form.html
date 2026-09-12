@@ -275,6 +275,30 @@ document.addEventListener("DOMContentLoaded", function () {
 
     });
 
+    // Configurable workflow: when the application type changes, ask the
+    // server who this type is routed to by default (set by an admin,
+    // no code involved - see ApplicationType.default_authority_role /
+    // route_to_admin_office) and pre-select that person. The person
+    // can still pick someone else manually - this only sets a sensible
+    // starting point.
+    var typeField = document.getElementById("{{ form.application_type.id_for_label }}");
+    if (typeField) {
+        typeField.addEventListener("change", function () {
+            var typeId = typeField.value;
+            if (!typeId) return;
+            fetch("/api/authorities/suggest/?application_type=" + encodeURIComponent(typeId), {
+                credentials: "same-origin",
+            })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    if (data && data.authority && data.authority.id) {
+                        $(".authority-select").val(data.authority.id).trigger("change");
+                    }
+                })
+                .catch(function () { /* silently keep manual selection available */ });
+        });
+    }
+
 });
 
 </script>

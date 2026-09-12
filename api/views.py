@@ -11,6 +11,7 @@ from accounts.services import import_users_from_csv
 from applications.models import Application, ApplicationType
 from announcements.models import Announcement
 from organizations.models import OrgUnit
+from applications.services import suggest_authority
 from .serializers import (
     LoginSerializer, UserSerializer, ApplicationSerializer,
     ApplicationTypeSerializer, AnnouncementSerializer, AuthoritySerializer
@@ -65,6 +66,30 @@ def authorities_api(request):
 
     qs = qs.order_by("first_name", "last_name")
     return Response(AuthoritySerializer(qs, many=True).data)
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def suggest_authority_api(request):
+    """
+    Given ?application_type=<id>, returns who this should default to
+    based on that type's configurable routing rule (see
+    applications.services.suggest_authority) - or {"authority": null}
+    if nobody matches, in which case the caller should let the person
+    pick manually from the full list instead.
+    """
+    type_id = request.query_params.get("application_type")
+    if not type_id:
+        return Response({"detail": "application_type is required."}, status=status.HTTP_400_BAD_REQUEST)
+    try:
+        app_type = ApplicationType.objects.get(pk=type_id, active=True)
+    except ApplicationType.DoesNotExist:
+        return Response({"detail": "Unknown or inactive application type."}, status=status.HTTP_404_NOT_FOUND)
+
+    match = suggest_authority(request.user, app_type)
+    if match is None:
+        return Response({"authority": None})
+    return Response({"authority": AuthoritySerializer(match).data})
 
 
 class ApplicationTypeViewSet(viewsets.ReadOnlyModelViewSet):
