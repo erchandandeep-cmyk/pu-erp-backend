@@ -1,7 +1,9 @@
 from django import forms
+from django.db.models import Q
 
 from .models import Application, ApplicationType
 from accounts.models import User
+from organizations.models import OrgUnit
 
 
 class ApplicationForm(forms.ModelForm):
@@ -80,10 +82,16 @@ class ApplicationForm(forms.ModelForm):
         # Scale-safety: once there are 70+ departments/300+ offices, a
         # student should not see every staff member university-wide -
         # narrow the list to their own org unit (department/college/
-        # office) when one is set. Admins (no org_unit needed) still see
-        # everyone if org_unit isn't set on the applicant.
+        # office), PLUS anyone in a university-wide administrative
+        # office (VC, Registrar, Deans, etc.), since those need to be
+        # reachable from any department, not just their own.
         if applicant is not None and getattr(applicant, "org_unit_id", None):
-            authority_qs = authority_qs.filter(org_unit_id=applicant.org_unit_id)
+            admin_office_ids = OrgUnit.objects.filter(
+                unit_type=OrgUnit.UnitType.ADMIN_OFFICE, is_active=True
+            ).values_list("id", flat=True)
+            authority_qs = authority_qs.filter(
+                Q(org_unit_id=applicant.org_unit_id) | Q(org_unit_id__in=admin_office_ids)
+            )
 
         self.fields["authority"].queryset = authority_qs.order_by(
             "first_name",

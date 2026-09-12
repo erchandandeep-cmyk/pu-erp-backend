@@ -1,4 +1,5 @@
 from django.contrib.auth import authenticate
+from django.db.models import Q
 from rest_framework import status, viewsets
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import api_view, permission_classes, action
@@ -9,6 +10,7 @@ from accounts.models import User
 from accounts.services import import_users_from_csv
 from applications.models import Application, ApplicationType
 from announcements.models import Announcement
+from organizations.models import OrgUnit
 from .serializers import (
     LoginSerializer, UserSerializer, ApplicationSerializer,
     ApplicationTypeSerializer, AnnouncementSerializer, AuthoritySerializer
@@ -40,16 +42,27 @@ def me_api(request):
 def authorities_api(request):
     """
     Who the current user is allowed to address a new application to.
-    Scoped to the applicant's own org unit once one is set, so this stays
-    a short, relevant list even after the university has 300+ offices.
+
+    Scoped to the applicant's own org unit (so the list stays short and
+    relevant even with 300+ offices) PLUS anyone in a university-wide
+    administrative office (Vice-Chancellor, Registrar, Deans, etc.) -
+    those need to be reachable from any department, not just their own.
     """
     qs = User.objects.filter(
         role__in=[User.Role.TEACHER, User.Role.HOD, User.Role.STAFF, User.Role.ADMIN],
         is_active=True,
         is_active_account=True,
     )
-    if getattr(request.user, "org_unit_id", None):
-        qs = qs.filter(org_unit_id=request.user.org_unit_id)
+    own_unit_id = getattr(request.user, "org_unit_id", None)
+    admin_office_ids = OrgUnit.objects.filter(
+        unit_type=OrgUnit.UnitType.ADMIN_OFFICE, is_active=True
+    ).values_list("id", flat=True)
+
+    if own_unit_id:
+        qs = qs.filter(Q(org_unit_id=own_unit_id) | Q(org_unit_id__in=admin_office_ids))
+    else:
+        qs = qs.filter(org_unit_id__in=admin_office_ids)
+
     qs = qs.order_by("first_name", "last_name")
     return Response(AuthoritySerializer(qs, many=True).data)
 
@@ -65,9 +78,28 @@ class ApplicationViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        if user.role == User.Role.STUDENT:
-            return Application.objects.filter(applicant=user).select_related("application_type", "applicant").order_by("-created_at")
-        return Application.objects.all().select_related("application_type", "applicant").order_by("-created_at")
+        qs = Application.objects.select_related(
+            "application_type", "applicant", "authority"
+        ).order_by("-created_at")
+
+        if user.is_superuser or user.role == User.Role.ADMIN:
+            # Admins/superusers can see everything - needed for
+            # university-wide oversight (e.g. Registrar's office).
+            base = qs
+        elif user.role == User.Role.STUDENT:
+            base = qs.filter(applicant=user)
+        else:
+            # Teacher / Staff / HOD: their own submitted applications,
+            # plus anything currently sitting with them to act on.
+            # (Previously this returned Application.objects.all() -
+            # every application in the entire university, regardless of
+            # department. That was a real privacy bug, fixed here.)
+            base = qs.filter(Q(applicant=user) | Q(authority=user))
+
+        if self.request.query_params.get("inbox") == "true":
+            base = base.filter(authority=user)
+
+        return base
 
     def create(self, request, *args, **kwargs):
         if request.user.role != User.Role.STUDENT:
@@ -98,13 +130,49 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         }
         if action_name not in status_map:
             return Response({"detail": "Invalid action. Use APPROVE, REJECT, REVIEW, FORWARD or COMPLETE."}, status=status.HTTP_400_BAD_REQUEST)
+
+        history_note = remark
+
+        if action_name == "FORWARD":
+            forward_user_id = request.data.get("forward_user")
+            if not forward_user_id:
+                return Response({"detail": "forward_user is required to forward an application."}, status=status.HTTP_400_BAD_REQUEST)
+
+            allowed_forward_roles = {
+                "TEACHER": {"STAFF", "HOD", "ADMIN"},
+                "STAFF": {"HOD", "ADMIN"},
+                "HOD": {"TEACHER", "STAFF", "HOD", "ADMIN"},
+                "ADMIN": {"TEACHER", "STAFF", "HOD", "ADMIN"},
+            }
+            allowed_roles = allowed_forward_roles.get(request.user.role, set()) if not request.user.is_superuser else set(status_map) | {"TEACHER", "STAFF", "HOD", "ADMIN"}
+
+            try:
+                target_user = User.objects.get(pk=forward_user_id, is_active=True, is_active_account=True)
+            except User.DoesNotExist:
+                return Response({"detail": "The selected recipient was not found or is inactive."}, status=status.HTTP_400_BAD_REQUEST)
+
+            if target_user.role not in allowed_roles and not request.user.is_superuser:
+                return Response({"detail": f"You are not allowed to forward to a {target_user.get_role_display()}."}, status=status.HTTP_403_FORBIDDEN)
+
+            if target_user.pk == request.user.pk:
+                return Response({"detail": "You cannot forward an application to yourself."}, status=status.HTTP_400_BAD_REQUEST)
+
+            application.authority = target_user
+            target_name = target_user.get_full_name() or target_user.username
+            history_note = remark or f"Application forwarded to {target_name}."
+
         application.status = status_map[action_name]
         application.current_remark = remark
-        application.save(update_fields=["status", "current_remark", "updated_at"])
+        update_fields = ["status", "current_remark", "updated_at"]
+        if action_name == "FORWARD":
+            update_fields.append("authority")
+        application.save(update_fields=update_fields)
         from applications.models import ApplicationHistory
         from notifications.models import Notification
-        ApplicationHistory.objects.create(application=application, actor=request.user, action=action_name.title(), remark=remark)
+        ApplicationHistory.objects.create(application=application, actor=request.user, action=action_name.title(), remark=history_note)
         Notification.objects.create(user=application.applicant, title=f"Application {action_name.lower()}", message=f"{application.application_id} is now {application.get_status_display()}. {remark}".strip(), link=f"/applications/{application.pk}/")
+        if action_name == "FORWARD":
+            Notification.objects.create(user=application.authority, title="Application forwarded to you", message=f"{application.application_id}: {application.subject}", link=f"/applications/{application.pk}/")
         return Response(ApplicationSerializer(application).data)
 
     def destroy(self, request, *args, **kwargs):
