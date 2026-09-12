@@ -1,0 +1,433 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+
+  <meta charset="utf-8">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>{% block title %}ME-ERP{% endblock %}</title>
+
+
+  <!-- =====================================================
+       BOOTSTRAP
+  ====================================================== -->
+
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  >
+
+
+  <!-- =====================================================
+       SELECT2 CSS
+  ====================================================== -->
+
+  <link
+    href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css"
+    rel="stylesheet"
+  >
+
+
+  <style>
+
+    body {
+      background: #f5f7fb;
+    }
+
+    .brand {
+      font-weight: 700;
+      letter-spacing: .3px;
+    }
+
+    .sidebar {
+      min-height: calc(100vh - 56px);
+      background: #172033;
+    }
+
+    .sidebar a {
+      color: #dce4f2;
+      text-decoration: none;
+      display: block;
+      padding: 10px 14px;
+      border-radius: 8px;
+      margin-bottom: 4px;
+    }
+
+    .sidebar a:hover {
+      background: #263553;
+    }
+
+    .card-stat {
+      border: 0;
+      border-radius: 16px;
+    }
+
+
+    /* =====================================================
+       SELECT2 AUTHORITY FIELD
+    ====================================================== */
+
+    .select2-container {
+      width: 100% !important;
+    }
+
+    .select2-container
+    .select2-selection--single {
+
+      height: 38px !important;
+
+      border: 1px solid #dee2e6 !important;
+
+      border-radius: 6px !important;
+
+      background-color: #fff !important;
+
+      display: flex !important;
+
+      align-items: center !important;
+
+      padding-left: 4px;
+
+    }
+
+
+    .select2-container
+    .select2-selection--single
+    .select2-selection__rendered {
+
+      color: #212529 !important;
+
+      line-height: 36px !important;
+
+      padding-left: 8px !important;
+
+    }
+
+
+    .select2-container
+    .select2-selection--single
+    .select2-selection__arrow {
+
+      height: 36px !important;
+
+      right: 6px !important;
+
+    }
+
+
+    .select2-container--default
+    .select2-selection--single:focus {
+
+      border-color: #86b7fe !important;
+
+      box-shadow:
+        0 0 0 .25rem rgba(13, 110, 253, .25) !important;
+
+    }
+
+
+    /* Search box inside dropdown */
+
+    .select2-search__field {
+
+      border: 1px solid #ced4da !important;
+
+      border-radius: 5px !important;
+
+      padding: 8px !important;
+
+    }
+
+
+    /* Dropdown options */
+
+    .select2-results__option {
+
+      padding: 10px 12px !important;
+
+    }
+
+
+    .select2-results__option--highlighted {
+
+      background-color: #0d6efd !important;
+
+      color: white !important;
+
+    }
+
+
+    .select2-dropdown {
+
+      border: 1px solid #dee2e6 !important;
+
+      border-radius: 6px !important;
+
+      overflow: hidden;
+
+    }
+
+  </style>
+
+</head>
+
+
+<body>
+
+
+<!-- =====================================================
+     NAVBAR
+====================================================== -->
+
+<nav class="navbar navbar-dark bg-primary">
+
+  <div class="container-fluid">
+
+    <a
+      class="navbar-brand brand"
+      href="{% url 'dashboard' %}"
+    >
+      ME-ERP
+    </a>
+
+{% if user.is_authenticated %}
+
+<div class="d-flex align-items-center">
+
+  <!-- =========================================
+       NOTIFICATION BELL
+  ========================================== -->
+
+  <a
+    href="{% url 'notification_list' %}"
+    class="btn btn-sm btn-light position-relative me-3"
+    title="Notifications"
+  >
+
+    🔔
+
+    {% if unread_notification_count > 0 %}
+
+    <span
+      class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+    >
+      {{ unread_notification_count }}
+    </span>
+
+    {% endif %}
+
+  </a>
+
+
+  <!-- =========================================
+       USER INFORMATION
+  ========================================== -->
+
+  <span class="text-white">
+
+    {{ user.display_name }}
+    ·
+    {{ user.get_role_display }}
+
+  </span>
+
+
+  <!-- =========================================
+       LOGOUT
+  ========================================== -->
+
+  <a
+    class="btn btn-sm btn-light ms-2"
+    href="{% url 'logout' %}"
+  >
+    Logout
+  </a>
+
+</div>
+
+{% endif %}
+
+  </div>
+
+</nav>
+
+
+<!-- =====================================================
+     MAIN LAYOUT
+====================================================== -->
+
+{% if user.is_authenticated %}
+
+<div class="container-fluid">
+
+  <div class="row">
+
+
+    <!-- =================================================
+         SIDEBAR
+    ================================================== -->
+
+    <aside class="col-md-2 col-lg-2 sidebar py-3">
+
+
+      <a href="{% url 'dashboard' %}">
+        🏠 Dashboard
+      </a>
+      <a href="{% url 'notification_list' %}">
+  🔔 Notifications
+
+  {% if unread_notification_count > 0 %}
+
+  <span class="badge bg-danger float-end">
+    {{ unread_notification_count }}
+  </span>
+
+  {% endif %}
+
+</a>
+
+
+      <a href="{% url 'application_list' %}">
+        📄 Applications
+      </a>
+
+
+      <a href="{% url 'create_application' %}">
+        ➕ New Application
+      </a>
+
+
+      <a href="{% url 'announcement_list' %}">
+        📢 Announcements
+      </a>
+
+
+      {% if user.role != "STUDENT" %}
+
+      <a href="{% url 'create_announcement' %}">
+        📝 New Announcement
+      </a>
+
+      {% endif %}
+
+
+      <a href="{% url 'document_list' %}">
+        📁 My Documents
+      </a>
+
+
+      <a href="{% url 'profile' %}">
+        👤 Profile
+      </a>
+
+
+      {% if user.role == "STAFF" or user.role == "HOD" or user.role == "ADMIN" or user.is_superuser %}
+
+      <a href="{% url 'import_users' %}">
+        👥 Import Users
+      </a>
+
+      {% endif %}
+
+
+      {% if user.role == "ADMIN" or user.is_superuser %}
+
+      <a href="{% url 'user_list' %}">
+        🧑‍💼 Manage Users
+      </a>
+
+      <a href="{% url 'org_unit_list' %}">
+        🏛 Departments & Colleges
+      </a>
+
+      {% endif %}
+
+
+      {% if user.is_staff %}
+
+      <a href="/admin/">
+        ⚙ Admin
+      </a>
+
+      {% endif %}
+
+
+    </aside>
+
+
+    <!-- =================================================
+         PAGE CONTENT
+    ================================================== -->
+
+    <main class="col-md-10 col-lg-10 p-4">
+
+{% endif %}
+
+
+<!-- =====================================================
+     DJANGO MESSAGES
+====================================================== -->
+
+{% for message in messages %}
+
+<div class="alert alert-{{ message.tags|default:'info' }}">
+
+  {{ message }}
+
+</div>
+
+{% endfor %}
+
+
+<!-- =====================================================
+     CONTENT BLOCK
+====================================================== -->
+
+{% block content %}
+
+{% endblock %}
+
+
+{% if user.is_authenticated %}
+
+    </main>
+
+  </div>
+
+</div>
+
+{% endif %}
+
+
+<!-- =====================================================
+     JQUERY
+====================================================== -->
+
+<script
+  src="https://code.jquery.com/jquery-3.7.1.min.js">
+</script>
+
+
+<!-- =====================================================
+     SELECT2 JAVASCRIPT
+====================================================== -->
+
+<script
+  src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js">
+</script>
+
+
+<!-- =====================================================
+     PAGE-SPECIFIC JAVASCRIPT
+====================================================== -->
+
+{% block extra_js %}
+
+{% endblock %}
+
+
+</body>
+
+</html>
