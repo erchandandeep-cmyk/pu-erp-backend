@@ -14,6 +14,13 @@ class User(AbstractUser):
 
     role = models.CharField(max_length=20, choices=Role.choices, default=Role.STUDENT)
     employee_or_student_id = models.CharField(max_length=40, unique=True, null=True, blank=True)
+    designation = models.CharField(
+        max_length=150,
+        blank=True,
+        help_text="Job title for display only (e.g. 'Registrar', 'Assistant "
+        "Professor', 'Section Officer') - separate from 'role', which "
+        "controls what they can do in the app.",
+    )
     phone = models.CharField(max_length=20, blank=True)
     department = models.CharField(
         max_length=120,

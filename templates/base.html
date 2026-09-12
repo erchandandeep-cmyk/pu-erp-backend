@@ -332,6 +332,19 @@
       {% endif %}
 
 
+      {% if user.role == "ADMIN" or user.is_superuser %}
+
+      <a href="{% url 'user_list' %}">
+        🧑‍💼 Manage Users
+      </a>
+
+      <a href="{% url 'org_unit_list' %}">
+        🏛 Departments & Colleges
+      </a>
+
+      {% endif %}
+
+
       {% if user.is_staff %}
 
       <a href="/admin/">

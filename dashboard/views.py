@@ -20,16 +20,21 @@ def dashboard(request):
     role = request.user.role
 
     # -----------------------------------------------------
-    # KEEP EXISTING VISIBILITY LOGIC
+    # VISIBILITY LOGIC
     # -----------------------------------------------------
+    # Admins/superusers: everything (needed for university-wide
+    # oversight). Everyone else: their own submissions plus anything
+    # currently assigned to them - NOT every application in the whole
+    # university (that was a real privacy leak, fixed here to match
+    # the same rule already applied to the mobile API).
 
-    if request.user.is_superuser or role in {
-        "TEACHER",
-        "STAFF",
-        "HOD",
-        "ADMIN",
-    }:
+    if request.user.is_superuser or role == "ADMIN":
         applications = Application.objects.all()
+    elif role in {"TEACHER", "STAFF", "HOD"}:
+        from django.db.models import Q
+        applications = Application.objects.filter(
+            Q(applicant=request.user) | Q(authority=request.user)
+        )
     else:
         applications = Application.objects.filter(
             applicant=request.user

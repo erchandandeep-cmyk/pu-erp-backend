@@ -10,6 +10,7 @@ urlpatterns = [
     path("", home, name="home"),
     path("dashboard/", include("dashboard.urls")),
     path("accounts/", include("accounts.urls")),
+    path("org-units/", include("organizations.urls")),
     path("applications/", include("applications.urls")),
     path("announcements/", include("announcements.urls")),
     path("documents/", include("documents.urls")),
