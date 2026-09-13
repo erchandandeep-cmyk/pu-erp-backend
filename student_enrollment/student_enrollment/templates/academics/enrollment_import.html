@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Import Enrollments — ME-ERP{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div><h2>Bulk Enroll Students</h2><p class="text-muted">Enroll a whole batch at once from a CSV or Excel file.</p></div>
+  <div>
+    <a class="btn btn-outline-secondary me-2" href="{% url 'enrollment_list' %}">Back to Enrollments</a>
+    <a class="btn btn-outline-primary" href="data:text/csv;charset=utf-8,student_username,programme_code,academic_session,batch_year,roll_number,current_semester,status%0A">CSV header example</a>
+  </div>
+</div>
+<div class="card shadow-sm border-0 mb-4"><div class="card-body">
+<form method="post" enctype="multipart/form-data">
+  {% csrf_token %}
+  <label class="form-label">Enrollment file (.csv or .xlsx)</label>
+  <input class="form-control" type="file" name="file" accept=".csv,.xlsx" required>
+  <div class="form-text">
+    Required columns: student_username, programme_code, academic_session, batch_year.<br>
+    Optional: roll_number, current_semester (default 1), status (default ACTIVE - one of ACTIVE, COMPLETED, WITHDRAWN, TRANSFERRED).<br>
+    The student, programme, and academic session must already exist (create the student via Manage Users, the programme under Programmes, and the session under Academic Sessions first).<br>
+    Safe to re-upload - re-running for the same student/programme/session updates that row instead of duplicating it.
+  </div>
+  <div class="mt-3"><button class="btn btn-primary">Upload and Import</button></div>
+</form>
+</div></div>
+{% if result %}
+<div class="card shadow-sm border-0"><div class="card-body">
+<h5>Import result</h5>
+<p><strong>{{ result.created }}</strong> created · {{ result.updated }} updated · {{ result.total_rows }} rows processed</p>
+{% if result.errors %}<h6>Rows needing correction</h6><ul>{% for error in result.errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}
+</div></div>
+{% endif %}
+{% endblock %}
