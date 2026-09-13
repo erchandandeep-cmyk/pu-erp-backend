@@ -10,9 +10,24 @@ class LoginSerializer(serializers.Serializer):
 class UserSerializer(serializers.ModelSerializer):
     display_name = serializers.CharField(read_only=True)
     org_unit_name = serializers.CharField(source="org_unit.name", read_only=True, default=None)
+    current_enrollment = serializers.SerializerMethodField()
+
     class Meta:
         model = User
-        fields = ["id", "username", "first_name", "last_name", "email", "role", "employee_or_student_id", "phone", "department", "org_unit", "org_unit_name", "semester", "section", "display_name"]
+        fields = ["id", "username", "first_name", "last_name", "email", "role", "employee_or_student_id", "phone", "department", "org_unit", "org_unit_name", "semester", "section", "display_name", "current_enrollment"]
+
+    def get_current_enrollment(self, obj):
+        active = obj.enrollments.filter(status="ACTIVE").select_related("programme", "academic_session").first() if hasattr(obj, "enrollments") else None
+        if not active:
+            return None
+        return {
+            "programme": active.programme.name,
+            "programme_code": active.programme.code,
+            "academic_session": active.academic_session.name,
+            "current_semester": active.current_semester,
+            "roll_number": active.roll_number,
+        }
+
 
 class AuthoritySerializer(serializers.ModelSerializer):
     display_name = serializers.CharField(read_only=True)

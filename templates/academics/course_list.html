@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Courses — ME-ERP{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div><h2>Courses</h2><p class="text-muted">Subjects offered under each programme, e.g. CS201 - Data Structures.</p></div>
+  <a class="btn btn-primary" href="{% url 'course_create' %}">+ Add Course</a>
+</div>
+<form method="get" class="row g-2 mb-3">
+  <div class="col-auto"><input class="form-control" type="text" name="q" value="{{ q }}" placeholder="Search name or code"></div>
+  <div class="col-auto"><button class="btn btn-outline-secondary">Filter</button></div>
+</form>
+<div class="card shadow-sm border-0"><div class="table-responsive">
+<table class="table table-hover align-middle mb-0">
+<thead><tr><th>Code</th><th>Name</th><th>Programme</th><th>Semester</th><th>Credits</th><th>Type</th><th>Status</th><th style="width:1%"></th></tr></thead>
+<tbody>
+{% for c in courses %}
+<tr {% if not c.is_active %}class="table-secondary"{% endif %}>
+  <td><code>{{ c.code }}</code></td>
+  <td>{{ c.name }}</td>
+  <td>{{ c.programme.code }}</td>
+  <td>{{ c.semester_number }}</td>
+  <td>{{ c.credits }}</td>
+  <td>{{ c.get_course_type_display }}</td>
+  <td>{% if c.is_active %}<span class="badge bg-success">Active</span>{% else %}<span class="badge bg-danger">Inactive</span>{% endif %}</td>
+  <td class="text-nowrap">
+    <a class="btn btn-sm btn-outline-primary" href="{% url 'course_edit' c.pk %}">Edit</a>
+    <form method="post" action="{% url 'course_toggle_active' c.pk %}" class="d-inline">
+      {% csrf_token %}
+      <button class="btn btn-sm {% if c.is_active %}btn-outline-warning{% else %}btn-outline-success{% endif %}">
+        {% if c.is_active %}Deactivate{% else %}Reactivate{% endif %}
+      </button>
+    </form>
+  </td>
+</tr>
+{% empty %}
+<tr><td colspan="8" class="text-center text-muted py-4">No courses yet.</td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div></div>
+{% endblock %}

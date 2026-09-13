@@ -12,6 +12,7 @@ from applications.models import Application, ApplicationType
 from announcements.models import Announcement
 from organizations.models import OrgUnit
 from applications.services import suggest_authority
+from audit.models import AuditLog
 from .serializers import (
     LoginSerializer, UserSerializer, ApplicationSerializer,
     ApplicationTypeSerializer, AnnouncementSerializer, AuthoritySerializer
@@ -132,7 +133,14 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         return super().create(request, *args, **kwargs)
 
     def perform_create(self, serializer):
-        serializer.save(applicant=self.request.user)
+        obj = serializer.save(applicant=self.request.user)
+        AuditLog.objects.create(
+            actor=self.request.user,
+            action="APPLICATION_SUBMITTED",
+            object_type="Application",
+            object_id=str(obj.pk),
+            details=f"{obj.application_id} (via mobile app)",
+        )
 
     def update(self, request, *args, **kwargs):
         if request.user.role not in {User.Role.TEACHER, User.Role.STAFF, User.Role.HOD, User.Role.ADMIN} and not request.user.is_superuser:
@@ -195,6 +203,13 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         from applications.models import ApplicationHistory
         from notifications.models import Notification
         ApplicationHistory.objects.create(application=application, actor=request.user, action=action_name.title(), remark=history_note)
+        AuditLog.objects.create(
+            actor=request.user,
+            action=f"APPLICATION_{action_name}",
+            object_type="Application",
+            object_id=str(application.pk),
+            details=f"{application.application_id}: {history_note} (via mobile app)",
+        )
         Notification.objects.create(user=application.applicant, title=f"Application {action_name.lower()}", message=f"{application.application_id} is now {application.get_status_display()}. {remark}".strip(), link=f"/applications/{application.pk}/")
         if action_name == "FORWARD":
             Notification.objects.create(user=application.authority, title="Application forwarded to you", message=f"{application.application_id}: {application.subject}", link=f"/applications/{application.pk}/")
