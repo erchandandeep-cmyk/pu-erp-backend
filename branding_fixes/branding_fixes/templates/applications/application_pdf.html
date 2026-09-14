@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <title>
+        {{ application.application_id }} - Application Record
+    </title>
+
+    <style>
+
+        /* =========================================================
+           PAGE
+        ========================================================= */
+
+        @page {
+            size: A4;
+            margin: 15mm 15mm 15mm 15mm;
+        }
+
+
+        /* =========================================================
+           GENERAL
+        ========================================================= */
+
+        body {
+            font-family: "DejaVu Sans", Arial, sans-serif;
+            font-size: 11px;
+            color: #222;
+            line-height: 1.45;
+            margin: 0;
+            padding: 0;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+
+        /* =========================================================
+           PROFESSIONAL HEADER
+        ========================================================= */
+
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #222;
+            padding-bottom: 10px;
+            margin-bottom: 16px;
+        }
+
+        .university {
+            font-size: 19px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .department {
+            font-size: 15px;
+            font-weight: bold;
+            margin-top: 3px;
+        }
+
+        .system-name {
+            font-size: 10px;
+            margin-top: 3px;
+            letter-spacing: 0.3px;
+        }
+
+        .document-title {
+            font-size: 15px;
+            font-weight: bold;
+            margin-top: 10px;
+            text-transform: uppercase;
+        }
+
+
+        /* =========================================================
+           APPLICATION IDENTIFICATION
+        ========================================================= */
+
+        .application-id-box {
+            text-align: right;
+            font-size: 10px;
+            margin-bottom: 10px;
+        }
+
+        .application-id-box strong {
+            font-size: 11px;
+        }
+
+
+        /* =========================================================
+           SECTION TITLE
+        ========================================================= */
+
+        .section-title {
+            font-size: 13px;
+            font-weight: bold;
+            margin-top: 13px;
+            margin-bottom: 6px;
+            padding-bottom: 4px;
+            border-bottom: 1px solid #777;
+        }
+
+
+        /* =========================================================
+           APPLICATION INFORMATION TABLE
+        ========================================================= */
+
+        .info-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 10px;
+        }
+
+        .info-table td {
+            border: 1px solid #999;
+            padding: 6px 7px;
+            vertical-align: top;
+        }
+
+        .info-label {
+            width: 22%;
+            font-weight: bold;
+            background: #f1f1f1;
+        }
+
+
+        /* =========================================================
+           SUBJECT
+        ========================================================= */
+
+        .subject-box {
+            border: 1px solid #999;
+            padding: 8px;
+            min-height: 28px;
+            margin-bottom: 10px;
+        }
+
+
+        /* =========================================================
+           APPLICATION BODY
+        ========================================================= */
+
+        .body-box {
+            border: 1px solid #999;
+            padding: 10px;
+            min-height: 110px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+
+        /* =========================================================
+           ATTACHMENT
+        ========================================================= */
+
+        .attachment-box {
+            border: 1px solid #999;
+            padding: 7px;
+            margin-top: 8px;
+            font-size: 10px;
+        }
+
+
+        /* =========================================================
+           REMARK
+        ========================================================= */
+
+        .remark-box {
+            border: 1px solid #999;
+            padding: 8px;
+            margin-top: 8px;
+            background: #f8f8f8;
+        }
+
+
+        /* =========================================================
+           STATUS
+        ========================================================= */
+
+        .status-box {
+            border: 1px solid #777;
+            padding: 7px 9px;
+            margin-top: 10px;
+            font-size: 11px;
+        }
+
+        .status-label {
+            font-weight: bold;
+        }
+
+
+        /* =========================================================
+           TIMELINE
+        ========================================================= */
+
+        .timeline {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 5px;
+        }
+
+        .timeline th {
+            background: #eeeeee;
+            border: 1px solid #999;
+            padding: 6px;
+            text-align: left;
+            font-size: 10px;
+        }
+
+        .timeline td {
+            border: 1px solid #aaa;
+            padding: 6px;
+            vertical-align: top;
+            font-size: 10px;
+        }
+
+        .timeline-action {
+            font-weight: bold;
+        }
+
+        .timeline-remark {
+            margin-top: 3px;
+            font-size: 9px;
+        }
+
+
+        /* =========================================================
+           SIGNATURE SECTION
+        ========================================================= */
+
+        .signature-section {
+            margin-top: 18px;
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        .signature-title {
+            text-align: center;
+            font-size: 13px;
+            font-weight: bold;
+            border-bottom: 1px solid #555;
+            padding-bottom: 5px;
+            margin-bottom: 12px;
+        }
+
+        .signature-table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+
+        .signature-cell {
+            width: 33.33%;
+            text-align: center;
+            vertical-align: bottom;
+            padding: 4px;
+        }
+
+        .signature-image {
+            display: block;
+            max-width: 125px;
+            max-height: 52px;
+            margin: 0 auto 5px auto;
+            object-fit: contain;
+        }
+
+        .signature-space {
+            height: 52px;
+        }
+
+        .signature-line {
+            border-top: 1px solid #222;
+            width: 85%;
+            margin: 0 auto 5px auto;
+        }
+
+        .signature-name {
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        .signature-role {
+            font-size: 9px;
+            margin-top: 2px;
+        }
+
+
+        /* =========================================================
+           NO SIGNATURE MESSAGE
+        ========================================================= */
+
+        .no-signature {
+            text-align: center;
+            border: 1px solid #aaa;
+            padding: 10px;
+            font-size: 10px;
+            color: #666;
+        }
+
+
+        /* =========================================================
+           FOOTER
+        ========================================================= */
+
+        .footer {
+            margin-top: 15px;
+            padding-top: 6px;
+            border-top: 1px solid #999;
+            text-align: center;
+            font-size: 8px;
+            color: #666;
+        }
+
+
+        /* =========================================================
+           PAGE BREAK CONTROL
+        ========================================================= */
+
+        .avoid-break {
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        .timeline-section {
+            page-break-inside: auto;
+        }
+
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<!-- ============================================================
+     PROFESSIONAL HEADER
+============================================================= -->
+
+<div class="header">
+
+    <div class="university">
+        PUNJABI UNIVERSITY, PATIALA
+    </div>
+
+    <div class="department">
+        DEPARTMENT OF MECHANICAL ENGINEERING
+    </div>
+
+    <div class="system-name">
+        ME-ERP — DEPARTMENTAL E-OFFICE SYSTEM
+    </div>
+
+    <div class="document-title">
+        OFFICIAL APPLICATION RECORD
+    </div>
+
+</div>
+
+
+<!-- ============================================================
+     APPLICATION ID
+============================================================= -->
+
+<div class="application-id-box">
+
+    <strong>
+        Application ID:
+    </strong>
+
+    {{ application.application_id }}
+
+</div>
+
+
+<!-- ============================================================
+     APPLICATION INFORMATION
+============================================================= -->
+
+<div class="section-title">
+    Application Information
+</div>
+
+
+<table class="info-table">
+
+    <tr>
+
+        <td class="info-label">
+            Applicant
+        </td>
+
+        <td>
+            {{ application.applicant.display_name }}
+        </td>
+
+    </tr>
+
+
+    <tr>
+
+        <td class="info-label">
+            Application Type
+        </td>
+
+        <td>
+            {{ application.application_type.name }}
+        </td>
+
+    </tr>
+
+
+    <tr>
+
+        <td class="info-label">
+            Authority
+        </td>
+
+        <td>
+
+            {{ application.authority.display_name|default:"Not assigned" }}
+
+        </td>
+
+    </tr>
+
+
+    <tr>
+
+        <td class="info-label">
+            Submitted
+        </td>
+
+        <td>
+
+            {{ application.created_at|date:"d M Y, h:i A" }}
+
+        </td>
+
+    </tr>
+
+
+    <tr>
+
+        <td class="info-label">
+            Current Status
+        </td>
+
+        <td>
+
+            <strong>
+                {{ application.get_status_display }}
+            </strong>
+
+        </td>
+
+    </tr>
+
+</table>
+
+
+<!-- ============================================================
+     SUBJECT
+============================================================= -->
+
+<div class="section-title">
+    Subject
+</div>
+
+
+<div class="subject-box">
+
+    {{ application.subject }}
+
+</div>
+
+
+<!-- ============================================================
+     APPLICATION DETAILS
+============================================================= -->
+
+<div class="section-title">
+    Application Details
+</div>
+
+
+<div class="body-box">
+
+    {{ application.body|linebreaksbr }}
+
+</div>
+
+
+<!-- ============================================================
+     ATTACHMENT
+============================================================= -->
+
+{% if application.attachment %}
+
+<div class="attachment-box">
+
+    <strong>
+        Attachment:
+    </strong>
+
+    Attached document submitted with this application.
+
+</div>
+
+{% endif %}
+
+
+<!-- ============================================================
+     LATEST REMARK
+============================================================= -->
+
+{% if application.current_remark %}
+
+<div class="section-title">
+    Latest Remark
+</div>
+
+
+<div class="remark-box">
+
+    {{ application.current_remark }}
+
+</div>
+
+{% endif %}
+
+
+<!-- ============================================================
+     APPLICATION TIMELINE
+============================================================= -->
+
+<div class="section-title">
+    Application Timeline
+</div>
+
+
+<div class="timeline-section">
+
+    {% if history %}
+
+    <table class="timeline">
+
+        <thead>
+
+            <tr>
+
+                <th style="width: 22%;">
+                    Date & Time
+                </th>
+
+                <th style="width: 23%;">
+                    Action
+                </th>
+
+                <th style="width: 25%;">
+                    Processed By
+                </th>
+
+                <th style="width: 30%;">
+                    Remark
+                </th>
+
+            </tr>
+
+        </thead>
+
+
+        <tbody>
+
+            {% for h in history %}
+
+            <tr>
+
+                <td>
+
+                    {{ h.created_at|date:"d M Y, h:i A" }}
+
+                </td>
+
+
+                <td>
+
+                    <span class="timeline-action">
+
+                        {{ h.action }}
+
+                    </span>
+
+                </td>
+
+
+                <td>
+
+                    {{ h.actor.display_name }}
+
+                    {% if h.actor.role %}
+
+                        <div>
+                            {{ h.actor.get_role_display }}
+                        </div>
+
+                    {% endif %}
+
+                </td>
+
+
+                <td>
+
+                    {% if h.remark %}
+
+                        {{ h.remark }}
+
+                    {% else %}
+
+                        —
+
+                    {% endif %}
+
+                </td>
+
+            </tr>
+
+            {% endfor %}
+
+        </tbody>
+
+    </table>
+
+    {% else %}
+
+        <div class="no-signature">
+            No application history available.
+        </div>
+
+    {% endif %}
+
+</div>
+
+
+<!-- ============================================================
+     SIGNATURES / APPROVAL
+============================================================= -->
+
+<div class="signature-section">
+
+    <div class="signature-title">
+
+        Signatures / Approval
+
+    </div>
+
+
+    <table class="signature-table">
+
+        <tr>
+
+
+            <!-- ==================================================
+                 TEACHER SIGNATURE
+            =================================================== -->
+
+            <td class="signature-cell">
+
+                {% for h in history %}
+
+                    {% if h.actor.role == "TEACHER" %}
+
+                        {% if h.action == "Approved" or h.action == "Rejected" or h.action == "Marked under review" or h.action == "Completed" %}
+
+                            {% if h.actor.signature %}
+
+                                <img
+                                    src="{{ h.actor.signature.url }}"
+                                    class="signature-image"
+                                    alt="Teacher Signature"
+                                >
+
+                                <div class="signature-line"></div>
+
+                                <div class="signature-name">
+
+                                    {{ h.actor.display_name }}
+
+                                </div>
+
+                                <div class="signature-role">
+
+                                    Teacher
+
+                                </div>
+
+                            {% endif %}
+
+                        {% endif %}
+
+                    {% endif %}
+
+                {% endfor %}
+
+            </td>
+
+
+            <!-- ==================================================
+                 STAFF SIGNATURE
+            =================================================== -->
+
+            <td class="signature-cell">
+
+                {% for h in history %}
+
+                    {% if h.actor.role == "STAFF" %}
+
+                        {% if h.action == "Approved" or h.action == "Rejected" or h.action == "Marked under review" or h.action == "Completed" %}
+
+                            {% if h.actor.signature %}
+
+                                <img
+                                    src="{{ h.actor.signature.url }}"
+                                    class="signature-image"
+                                    alt="Staff Signature"
+                                >
+
+                                <div class="signature-line"></div>
+
+                                <div class="signature-name">
+
+                                    {{ h.actor.display_name }}
+
+                                </div>
+
+                                <div class="signature-role">
+
+                                    Staff
+
+                                </div>
+
+                            {% endif %}
+
+                        {% endif %}
+
+                    {% endif %}
+
+                {% endfor %}
+
+            </td>
+
+
+            <!-- ==================================================
+                 HOD SIGNATURE
+            =================================================== -->
+
+            <td class="signature-cell">
+
+                {% for h in history %}
+
+                    {% if h.actor.role == "HOD" %}
+
+                        {% if h.action == "Approved" or h.action == "Rejected" or h.action == "Marked under review" or h.action == "Completed" %}
+
+                            {% if h.actor.signature %}
+
+                                <img
+                                    src="{{ h.actor.signature.url }}"
+                                    class="signature-image"
+                                    alt="HOD Signature"
+                                >
+
+                                <div class="signature-line"></div>
+
+                                <div class="signature-name">
+
+                                    {{ h.actor.display_name }}
+
+                                </div>
+
+                                <div class="signature-role">
+
+                                    HOD
+
+                                </div>
+
+                            {% endif %}
+
+                        {% endif %}
+
+                    {% endif %}
+
+                {% endfor %}
+
+            </td>
+
+
+        </tr>
+
+    </table>
+
+</div>
+
+
+<!-- ============================================================
+     FOOTER
+============================================================= -->
+
+<div class="footer">
+
+    ME-ERP |
+    {{ application.applicant.org_unit.name|default:application.applicant.department }} |
+    Punjabi University, Patiala
+
+    <br>
+
+    This is a system-generated official application record.
+
+</div>
+
+
+</body>
+
+</html>

@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Programmes — PU ERP{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div><h2>Programmes</h2><p class="text-muted">Degree/diploma programmes offered by departments, e.g. B.Tech Mechanical Engineering.</p></div>
+  <a class="btn btn-primary" href="{% url 'programme_create' %}">+ Add Programme</a>
+</div>
+<form method="get" class="row g-2 mb-3">
+  <div class="col-auto"><input class="form-control" type="text" name="q" value="{{ q }}" placeholder="Search name or code"></div>
+  <div class="col-auto"><button class="btn btn-outline-secondary">Filter</button></div>
+</form>
+<div class="card shadow-sm border-0"><div class="table-responsive">
+<table class="table table-hover align-middle mb-0">
+<thead><tr><th>Name</th><th>Code</th><th>Department</th><th>Level</th><th>Duration</th><th>Status</th><th style="width:1%"></th></tr></thead>
+<tbody>
+{% for p in programmes %}
+<tr {% if not p.is_active %}class="table-secondary"{% endif %}>
+  <td>{{ p.name }}</td>
+  <td><code>{{ p.code }}</code></td>
+  <td>{{ p.department.name }}</td>
+  <td>{{ p.get_level_display }}</td>
+  <td>{{ p.duration_years }} yrs / {{ p.total_semesters }} sem</td>
+  <td>{% if p.is_active %}<span class="badge bg-success">Active</span>{% else %}<span class="badge bg-danger">Inactive</span>{% endif %}</td>
+  <td class="text-nowrap">
+    <a class="btn btn-sm btn-outline-primary" href="{% url 'programme_edit' p.pk %}">Edit</a>
+    <form method="post" action="{% url 'programme_toggle_active' p.pk %}" class="d-inline">
+      {% csrf_token %}
+      <button class="btn btn-sm {% if p.is_active %}btn-outline-warning{% else %}btn-outline-success{% endif %}">
+        {% if p.is_active %}Deactivate{% else %}Reactivate{% endif %}
+      </button>
+    </form>
+  </td>
+</tr>
+{% empty %}
+<tr><td colspan="7" class="text-center text-muted py-4">No programmes yet.</td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div></div>
+{% endblock %}

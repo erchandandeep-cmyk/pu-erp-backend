@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Mark Attendance — {{ course.code }} — ME-ERP{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2>{{ course.code }} - {{ course.name }}</h2>
+  <a class="btn btn-outline-secondary" href="{% url 'attendance_course_list' %}">Back</a>
+</div>
+
+<form method="get" class="row g-2 mb-3">
+  <div class="col-auto">
+    <input class="form-control" type="date" name="date" value="{{ date|date:'Y-m-d' }}" onchange="this.form.submit()">
+  </div>
+</form>
+
+<form method="post">
+  {% csrf_token %}
+  <input type="hidden" name="date" value="{{ date|date:'Y-m-d' }}">
+  <div class="card shadow-sm border-0"><div class="table-responsive">
+  <table class="table align-middle mb-0">
+  <thead><tr><th>Student</th><th>Present</th><th>Absent</th><th>Leave</th></tr></thead>
+  <tbody>
+  {% for row in rows %}
+  <tr>
+    <td>{{ row.registration.student.get_full_name|default:row.registration.student.username }}</td>
+    <td><input type="radio" name="status_{{ row.registration.id }}" value="PRESENT" {% if row.current_status == "PRESENT" %}checked{% endif %}></td>
+    <td><input type="radio" name="status_{{ row.registration.id }}" value="ABSENT" {% if row.current_status == "ABSENT" %}checked{% endif %}></td>
+    <td><input type="radio" name="status_{{ row.registration.id }}" value="LEAVE" {% if row.current_status == "LEAVE" %}checked{% endif %}></td>
+  </tr>
+  {% empty %}
+  <tr><td colspan="4" class="text-center text-muted py-4">No students registered for this course yet.</td></tr>
+  {% endfor %}
+  </tbody>
+  </table>
+  </div></div>
+  {% if rows %}<button class="btn btn-primary mt-3">Save Attendance for {{ date }}</button>{% endif %}
+</form>
+{% endblock %}

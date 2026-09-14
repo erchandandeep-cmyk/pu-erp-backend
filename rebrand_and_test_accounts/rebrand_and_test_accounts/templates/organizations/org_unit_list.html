@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Org Units — PU ERP{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div><h2>Departments, Colleges & Offices</h2><p class="text-muted">Every department, regional centre, college, and administrative office in the university.</p></div>
+  <div>
+    <a class="btn btn-outline-primary me-2" href="{% url 'org_unit_import' %}">Bulk Import (CSV)</a>
+    <a class="btn btn-primary" href="{% url 'org_unit_create' %}">+ Add Unit</a>
+  </div>
+</div>
+
+<form method="get" class="row g-2 mb-3">
+  <div class="col-auto"><input class="form-control" type="text" name="q" value="{{ q }}" placeholder="Search name or code"></div>
+  <div class="col-auto">
+    <select class="form-select" name="type">
+      <option value="">All types</option>
+      {% for value, label in unit_types %}
+      <option value="{{ value }}" {% if type_filter == value %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-auto"><button class="btn btn-outline-secondary">Filter</button></div>
+</form>
+
+<div class="card shadow-sm border-0"><div class="table-responsive">
+<table class="table table-hover align-middle mb-0">
+<thead><tr><th>Name</th><th>Code</th><th>Type</th><th>Reports To</th><th>Status</th><th style="width:1%"></th></tr></thead>
+<tbody>
+{% for u in units %}
+<tr {% if not u.is_active %}class="table-secondary"{% endif %}>
+  <td>{{ u.name }}</td>
+  <td><code>{{ u.code }}</code></td>
+  <td>{{ u.get_unit_type_display }}</td>
+  <td>{{ u.parent.name|default:"—" }}</td>
+  <td>{% if u.is_active %}<span class="badge bg-success">Active</span>{% else %}<span class="badge bg-danger">Inactive</span>{% endif %}</td>
+  <td class="text-nowrap">
+    <a class="btn btn-sm btn-outline-primary" href="{% url 'org_unit_edit' u.pk %}">Edit</a>
+    <form method="post" action="{% url 'org_unit_toggle_active' u.pk %}" class="d-inline">
+      {% csrf_token %}
+      <button class="btn btn-sm {% if u.is_active %}btn-outline-warning{% else %}btn-outline-success{% endif %}">
+        {% if u.is_active %}Deactivate{% else %}Reactivate{% endif %}
+      </button>
+    </form>
+  </td>
+</tr>
+{% empty %}
+<tr><td colspan="6" class="text-center text-muted py-4">No org units match this search.</td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div></div>
+{% endblock %}
