@@ -2,7 +2,7 @@ from django.core.management.base import BaseCommand
 from applications.models import ApplicationType
 
 class Command(BaseCommand):
-    help = "Create the standard Mechanical Department application types."
+    help = "Create the standard application types."
 
     def handle(self, *args, **options):
         items = [

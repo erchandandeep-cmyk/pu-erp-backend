@@ -13,11 +13,11 @@
     </div>
 
     <div class="print-header-department">
-        Department of Mechanical Engineering
+        {{ application.applicant.org_unit.name|default:application.applicant.department }}
     </div>
 
     <div class="print-header-system">
-        ME-ERP — OFFICIAL APPLICATION RECORD
+        Punjabi University ERP — OFFICIAL APPLICATION RECORD
     </div>
 
     <div class="print-header-line"></div>

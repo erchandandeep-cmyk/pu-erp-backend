@@ -151,7 +151,7 @@ def _process_user_rows(rows, actor):
                 ).strip(),
                 "phone": row.get("phone", "").strip(),
                 "designation": row.get("designation", "").strip(),
-                "department": row.get("department", "Mechanical Engineering").strip(),
+                "department": row.get("department", "").strip(),
                 "org_unit": org_unit,
                 "semester": semester,
                 "section": row.get("section", "").strip(),

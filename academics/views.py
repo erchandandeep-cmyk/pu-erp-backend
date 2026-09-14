@@ -3,8 +3,9 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404, redirect, render
 
-from .models import AcademicSession, Programme, Enrollment, Course, CourseRegistration
+from .models import AcademicSession, Programme, Enrollment, Course, CourseRegistration, AttendanceRecord
 from .forms import AcademicSessionForm, ProgrammeForm, EnrollmentForm, CourseForm, CourseRegistrationForm
+from .services import attendance_percentage
 from .services import import_enrollments_from_csv, import_enrollments_from_excel
 
 
@@ -275,3 +276,88 @@ def registration_edit(request, pk):
         return redirect("registration_list")
     return render(request, "academics/registration_form.html", {"form": form, "mode": "edit", "target": target})
 
+
+
+# ---------------- Attendance ----------------
+
+def _can_mark_attendance(user):
+    """
+    Teachers/Staff/HOD can mark attendance for courses taught under
+    their own department; Admins/superusers can mark for any course -
+    same department-scoping principle used everywhere else in the app.
+    """
+    from accounts.models import User
+    return bool(
+        user.is_authenticated and
+        (user.is_superuser or user.role in {User.Role.TEACHER, User.Role.HOD, User.Role.STAFF, User.Role.ADMIN})
+    )
+
+
+def _courses_for_attendance(user):
+    qs = Course.objects.filter(is_active=True).select_related("programme", "programme__department")
+    if user.is_superuser or user.role == "ADMIN":
+        return qs
+    if getattr(user, "org_unit_id", None):
+        return qs.filter(programme__department_id=user.org_unit_id)
+    return qs.none()
+
+
+@login_required
+def attendance_course_list(request):
+    if not _can_mark_attendance(request.user):
+        raise PermissionDenied
+    courses = _courses_for_attendance(request.user)
+    return render(request, "academics/attendance_course_list.html", {"courses": courses})
+
+
+@login_required
+def attendance_mark(request, course_id):
+    if not _can_mark_attendance(request.user):
+        raise PermissionDenied
+    course = get_object_or_404(_courses_for_attendance(request.user), pk=course_id)
+
+    from datetime import date as date_cls
+    date_str = request.GET.get("date") or request.POST.get("date")
+    mark_date = date_cls.fromisoformat(date_str) if date_str else date_cls.today()
+
+    registrations = CourseRegistration.objects.filter(
+        course=course, status=CourseRegistration.Status.REGISTERED
+    ).select_related("student")
+
+    existing = {
+        r.course_registration_id: r
+        for r in AttendanceRecord.objects.filter(course_registration__course=course, date=mark_date)
+    }
+
+    if request.method == "POST":
+        for reg in registrations:
+            status = request.POST.get(f"status_{reg.id}", AttendanceRecord.Status.PRESENT)
+            record, _ = AttendanceRecord.objects.update_or_create(
+                course_registration=reg, date=mark_date,
+                defaults={"status": status, "marked_by": request.user},
+            )
+        messages.success(request, f"Attendance saved for {course.code} on {mark_date}.")
+        return redirect(f"/academics/attendance/mark/{course.id}/?date={mark_date}")
+
+    rows = [
+        {"registration": reg, "current_status": existing[reg.id].status if reg.id in existing else "PRESENT"}
+        for reg in registrations
+    ]
+    return render(request, "academics/attendance_mark.html", {
+        "course": course, "date": mark_date, "rows": rows,
+    })
+
+
+@login_required
+def attendance_report(request, course_id):
+    if not _can_mark_attendance(request.user):
+        raise PermissionDenied
+    course = get_object_or_404(_courses_for_attendance(request.user), pk=course_id)
+    registrations = CourseRegistration.objects.filter(
+        course=course, status=CourseRegistration.Status.REGISTERED
+    ).select_related("student")
+    rows = [
+        {"student": reg.student, "percentage": attendance_percentage(reg)}
+        for reg in registrations
+    ]
+    return render(request, "academics/attendance_report.html", {"course": course, "rows": rows})

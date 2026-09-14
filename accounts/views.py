@@ -18,7 +18,7 @@ def login_view(request):
     form = LoginForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
         login(request, form.cleaned_data["user"])
-        messages.success(request, "Welcome to ME-ERP.")
+        messages.success(request, "Welcome to PU ERP.")
         return redirect("dashboard")
     return render(request, "accounts/login.html", {"form": form})
 

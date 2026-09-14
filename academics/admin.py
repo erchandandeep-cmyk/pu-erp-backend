@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import AcademicSession, Programme, Enrollment, Course, CourseRegistration
+from .models import AcademicSession, Programme, Enrollment, Course, CourseRegistration, AttendanceRecord
 
 
 @admin.register(AcademicSession)
@@ -39,4 +39,11 @@ class CourseRegistrationAdmin(admin.ModelAdmin):
     list_filter = ("status", "academic_session")
     search_fields = ("student__username", "student__first_name", "student__last_name", "course__code")
     autocomplete_fields = ("student", "course", "academic_session")
+
+
+@admin.register(AttendanceRecord)
+class AttendanceRecordAdmin(admin.ModelAdmin):
+    list_display = ("course_registration", "date", "status", "marked_by")
+    list_filter = ("status", "date")
+    autocomplete_fields = ("course_registration", "marked_by")
 

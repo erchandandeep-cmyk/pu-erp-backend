@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Dashboard - ME-ERP{% endblock %}
+{% block title %}Dashboard - PU ERP{% endblock %}
 
 {% block content %}
 
@@ -14,7 +14,7 @@
     <h2 class="mb-1">Dashboard</h2>
 
     <p class="text-muted mb-0">
-      Mechanical Department ERP
+      {{ request.user.org_unit.name|default:"Punjabi University ERP" }}
     </p>
   </div>
 

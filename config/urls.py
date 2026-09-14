@@ -1,10 +1,25 @@
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
+from django.http import JsonResponse
 from django.urls import include, path
 from dashboard.views import home
 
+
+def api_root_status(request):
+    """
+    A neutral machine-readable status endpoint, as recommended by the
+    live gap analysis - lets monitoring tools / uptime checks confirm
+    the API is alive without hitting a human-facing login page.
+    """
+    return JsonResponse({
+        "system": "Punjabi University ERP",
+        "status": "operational",
+    })
+
+
 urlpatterns = [
+    path("api/status/", api_root_status, name="api_status"),
     path("api/", include("api.urls")),
     path("admin/", admin.site.urls),
     path("", home, name="home"),

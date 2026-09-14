@@ -5,7 +5,7 @@ import openpyxl
 from django.core.exceptions import ValidationError
 
 from accounts.models import User
-from .models import AcademicSession, Programme, Enrollment
+from .models import AcademicSession, Programme, Enrollment, AttendanceRecord
 
 REQUIRED_COLUMNS = {"student_username", "programme_code", "academic_session", "batch_year"}
 
@@ -130,3 +130,18 @@ def import_enrollments_from_excel(uploaded_file):
         rows.append({k: ("" if v is None else v) for k, v in zip(fieldnames, values) if k})
 
     return _process_enrollment_rows(rows)
+
+
+def attendance_percentage(course_registration):
+    """
+    Percentage of marked days the student was PRESENT for this course
+    registration. LEAVE days don't count against them (excluded from
+    both present and total). Returns None if nothing has been marked
+    yet, so callers can distinguish "0%" from "no data yet".
+    """
+    records = course_registration.attendance_records.exclude(status=AttendanceRecord.Status.LEAVE)
+    total = records.count()
+    if total == 0:
+        return None
+    present = records.filter(status=AttendanceRecord.Status.PRESENT).count()
+    return round((present / total) * 100, 1)

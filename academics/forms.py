@@ -1,5 +1,5 @@
 from django import forms
-from .models import AcademicSession, Programme, Enrollment, Course, CourseRegistration
+from .models import AcademicSession, Programme, Enrollment, Course, CourseRegistration, Exam
 
 
 class AcademicSessionForm(forms.ModelForm):
@@ -95,6 +95,34 @@ class CourseRegistrationForm(forms.ModelForm):
         cleaned = super().clean()
         instance = self.instance
         for f in ["student", "course", "academic_session", "status"]:
+            if f in cleaned:
+                setattr(instance, f, cleaned[f])
+        try:
+            instance.clean()
+        except forms.ValidationError as exc:
+            raise forms.ValidationError(exc)
+        return cleaned
+
+
+class ExamForm(forms.ModelForm):
+    class Meta:
+        model = Exam
+        fields = ["course", "academic_session", "exam_type", "exam_date", "max_marks", "passing_marks", "min_attendance_percent", "is_published"]
+        widgets = {
+            "course": forms.Select(attrs={"class": "form-select"}),
+            "academic_session": forms.Select(attrs={"class": "form-select"}),
+            "exam_type": forms.Select(attrs={"class": "form-select"}),
+            "exam_date": forms.DateInput(attrs={"class": "form-control", "type": "date"}),
+            "max_marks": forms.NumberInput(attrs={"class": "form-control"}),
+            "passing_marks": forms.NumberInput(attrs={"class": "form-control"}),
+            "min_attendance_percent": forms.NumberInput(attrs={"class": "form-control"}),
+            "is_published": forms.CheckboxInput(attrs={"class": "form-check-input"}),
+        }
+
+    def clean(self):
+        cleaned = super().clean()
+        instance = self.instance
+        for f in ["passing_marks", "max_marks"]:
             if f in cleaned:
                 setattr(instance, f, cleaned[f])
         try:

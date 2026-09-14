@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Exams — PU ERP{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div><h2>Exams</h2><p class="text-muted">Exams for courses in your department.</p></div>
+  <a class="btn btn-primary" href="{% url 'exam_create' %}">+ Add Exam</a>
+</div>
+<div class="card shadow-sm border-0"><div class="table-responsive">
+<table class="table table-hover align-middle mb-0">
+<thead><tr><th>Course</th><th>Type</th><th>Session</th><th>Date</th><th>Max Marks</th><th>Published</th><th style="width:1%"></th></tr></thead>
+<tbody>
+{% for e in exams %}
+<tr>
+  <td>{{ e.course.code }}</td>
+  <td>{{ e.get_exam_type_display }}</td>
+  <td>{{ e.academic_session.name }}</td>
+  <td>{{ e.exam_date }}</td>
+  <td>{{ e.max_marks }}</td>
+  <td>{% if e.is_published %}<span class="badge bg-success">Published</span>{% else %}<span class="badge bg-secondary">Draft</span>{% endif %}</td>
+  <td class="text-nowrap">
+    <a class="btn btn-sm btn-outline-primary" href="{% url 'marks_entry' e.pk %}">Enter Marks</a>
+    <a class="btn btn-sm btn-outline-secondary" href="{% url 'exam_edit' e.pk %}">Edit</a>
+    <form method="post" action="{% url 'exam_toggle_publish' e.pk %}" class="d-inline">
+      {% csrf_token %}
+      <button class="btn btn-sm {% if e.is_published %}btn-outline-warning{% else %}btn-outline-success{% endif %}">
+        {% if e.is_published %}Unpublish{% else %}Publish{% endif %}
+      </button>
+    </form>
+  </td>
+</tr>
+{% empty %}
+<tr><td colspan="7" class="text-center text-muted py-4">No exams yet.</td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div></div>
+{% endblock %}

@@ -205,3 +205,44 @@ class CourseRegistration(models.Model):
                 f"{self.student} is enrolled in {active_enrollment.programme.code}. "
                 f"A student can only register for courses in their own programme."
             )
+
+
+class AttendanceRecord(models.Model):
+    """
+    One student's attendance for one course on one date. Built on top
+    of CourseRegistration - you can only mark attendance for a student
+    who is actually registered for that course (checked in clean()).
+    """
+
+    class Status(models.TextChoices):
+        PRESENT = "PRESENT", "Present"
+        ABSENT = "ABSENT", "Absent"
+        LEAVE = "LEAVE", "On Leave"
+
+    course_registration = models.ForeignKey(
+        CourseRegistration, on_delete=models.CASCADE, related_name="attendance_records"
+    )
+    date = models.DateField()
+    status = models.CharField(max_length=10, choices=Status.choices, default=Status.PRESENT)
+    marked_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name="attendance_marked"
+    )
+    marked_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-date"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["course_registration", "date"],
+                name="unique_attendance_per_registration_per_date",
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.course_registration.student} - {self.course_registration.course.code} - {self.date} - {self.status}"
+
+    def clean(self):
+        if self.course_registration_id and self.course_registration.status != CourseRegistration.Status.REGISTERED:
+            raise ValidationError(
+                "Cannot mark attendance for a dropped course registration."
+            )
