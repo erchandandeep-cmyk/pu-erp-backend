@@ -7,7 +7,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <title>{% block title %}ME-ERP{% endblock %}</title>
+  <title>{% block title %}PU ERP{% endblock %}</title>
 
 
   <!-- =====================================================
@@ -189,7 +189,7 @@
       class="navbar-brand brand"
       href="{% url 'dashboard' %}"
     >
-      ME-ERP
+      PU ERP
     </a>
 
 {% if user.is_authenticated %}
@@ -323,10 +323,23 @@
       </a>
 
 
+      {% if user.role == "STUDENT" %}
+
+      <a href="{% url 'my_transcript' %}">
+        🎓 My Results
+      </a>
+
+      {% endif %}
+
+
       {% if user.role == "TEACHER" or user.role == "STAFF" or user.role == "HOD" or user.role == "ADMIN" or user.is_superuser %}
 
       <a href="{% url 'attendance_course_list' %}">
         ✅ Attendance
+      </a>
+
+      <a href="{% url 'exam_list' %}">
+        📄 Exams
       </a>
 
       {% endif %}

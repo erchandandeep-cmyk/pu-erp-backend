@@ -3,8 +3,8 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404, redirect, render
 
-from .models import AcademicSession, Programme, Enrollment, Course, CourseRegistration, AttendanceRecord
-from .forms import AcademicSessionForm, ProgrammeForm, EnrollmentForm, CourseForm, CourseRegistrationForm
+from .models import AcademicSession, Programme, Enrollment, Course, CourseRegistration, AttendanceRecord, Exam, ExamResult
+from .forms import AcademicSessionForm, ProgrammeForm, EnrollmentForm, CourseForm, CourseRegistrationForm, ExamForm
 from .services import attendance_percentage
 from .services import import_enrollments_from_csv, import_enrollments_from_excel
 
@@ -361,3 +361,180 @@ def attendance_report(request, course_id):
         for reg in registrations
     ]
     return render(request, "academics/attendance_report.html", {"course": course, "rows": rows})
+
+
+# ---------------- Examinations ----------------
+
+@login_required
+def exam_list(request):
+    if not _can_mark_attendance(request.user):  # same role gate as attendance
+        raise PermissionDenied
+    courses = _courses_for_attendance(request.user)
+    exams = Exam.objects.filter(course__in=courses).select_related("course", "academic_session")
+    return render(request, "academics/exam_list.html", {"exams": exams})
+
+
+@login_required
+def exam_create(request):
+    if not _can_mark_attendance(request.user):
+        raise PermissionDenied
+    form = ExamForm(request.POST or None)
+    form.fields["course"].queryset = _courses_for_attendance(request.user)
+    if request.method == "POST" and form.is_valid():
+        try:
+            obj = form.save()
+        except Exception as exc:
+            messages.error(request, str(exc))
+            return render(request, "academics/exam_form.html", {"form": form, "mode": "create"})
+        messages.success(request, f"Created exam '{obj}'.")
+        return redirect("exam_list")
+    return render(request, "academics/exam_form.html", {"form": form, "mode": "create"})
+
+
+@login_required
+def exam_edit(request, pk):
+    if not _can_mark_attendance(request.user):
+        raise PermissionDenied
+    target = get_object_or_404(Exam, pk=pk, course__in=_courses_for_attendance(request.user))
+    form = ExamForm(request.POST or None, instance=target)
+    form.fields["course"].queryset = _courses_for_attendance(request.user)
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        messages.success(request, "Updated.")
+        return redirect("exam_list")
+    return render(request, "academics/exam_form.html", {"form": form, "mode": "edit", "target": target})
+
+
+@login_required
+def exam_toggle_publish(request, pk):
+    if not _can_mark_attendance(request.user):
+        raise PermissionDenied
+    if request.method != "POST":
+        raise PermissionDenied
+    target = get_object_or_404(Exam, pk=pk, course__in=_courses_for_attendance(request.user))
+    target.is_published = not target.is_published
+    target.save(update_fields=["is_published"])
+    state = "published - students can now see their marks" if target.is_published else "unpublished"
+    messages.success(request, f"'{target}' has been {state}.")
+    return redirect("exam_list")
+
+
+@login_required
+def marks_entry(request, exam_id):
+    if not _can_mark_attendance(request.user):
+        raise PermissionDenied
+    exam = get_object_or_404(Exam, pk=exam_id, course__in=_courses_for_attendance(request.user))
+    registrations = CourseRegistration.objects.filter(
+        course=exam.course, status=CourseRegistration.Status.REGISTERED
+    ).select_related("student")
+
+    existing = {r.course_registration_id: r for r in ExamResult.objects.filter(exam=exam)}
+
+    if request.method == "POST":
+        for reg in registrations:
+            raw_marks = request.POST.get(f"marks_{reg.id}", "").strip()
+            pct = attendance_percentage(reg)
+            is_eligible = pct is None or pct >= exam.min_attendance_percent
+            marks_value = None
+            if raw_marks:
+                try:
+                    marks_value = float(raw_marks)
+                except ValueError:
+                    messages.error(request, f"'{raw_marks}' is not a valid number for {reg.student}.")
+                    continue
+            result, _ = ExamResult.objects.update_or_create(
+                exam=exam, course_registration=reg,
+                defaults={
+                    "marks_obtained": marks_value,
+                    "is_eligible": is_eligible,
+                    "attendance_percent_snapshot": pct,
+                    "entered_by": request.user,
+                },
+            )
+            try:
+                result.full_clean()
+            except Exception as exc:
+                messages.error(request, f"{reg.student}: {exc}")
+        messages.success(request, f"Marks saved for {exam}.")
+        return redirect("marks_entry", exam_id=exam.id)
+
+    rows = []
+    for reg in registrations:
+        pct = attendance_percentage(reg)
+        prior = existing.get(reg.id)
+        rows.append({
+            "registration": reg,
+            "attendance_percent": pct,
+            "eligible": pct is None or pct >= exam.min_attendance_percent,
+            "current_marks": prior.marks_obtained if prior else "",
+        })
+    return render(request, "academics/marks_entry.html", {"exam": exam, "rows": rows})
+
+
+# ---------------- Transcript / Results ----------------
+
+def _build_transcript(student):
+    """
+    Every enrollment the student has, and for each course they've
+    registered for under it, every PUBLISHED exam result. Unpublished
+    exams never appear here, regardless of who's viewing - marks
+    aren't official until a teacher/admin explicitly publishes them.
+    """
+    enrollments = Enrollment.objects.filter(student=student).select_related("programme", "academic_session")
+    data = []
+    for enrollment in enrollments:
+        registrations = CourseRegistration.objects.filter(
+            student=student, course__programme=enrollment.programme
+        ).select_related("course")
+        courses = []
+        for reg in registrations:
+            results = ExamResult.objects.filter(
+                course_registration=reg, exam__is_published=True
+            ).select_related("exam")
+            if not results.exists():
+                continue
+            courses.append({
+                "course": reg.course,
+                "results": [
+                    {
+                        "exam": r.exam,
+                        "marks_obtained": r.marks_obtained,
+                        "percentage": r.percentage,
+                        "passed": r.passed,
+                        "is_eligible": r.is_eligible,
+                    }
+                    for r in results
+                ],
+            })
+        if courses:
+            data.append({"enrollment": enrollment, "courses": courses})
+    return data
+
+
+@login_required
+def my_transcript(request):
+    from accounts.models import User
+    if request.user.role != User.Role.STUDENT:
+        raise PermissionDenied("Only students have a transcript to view here.")
+    return render(request, "academics/transcript.html", {
+        "student": request.user, "transcript": _build_transcript(request.user), "is_self": True,
+    })
+
+
+@login_required
+def student_transcript(request, student_id):
+    """
+    Staff view of a specific student's transcript, scoped the same way
+    as everything else - same department, or Admin/superuser for
+    university-wide access.
+    """
+    from accounts.models import User
+    if not (request.user.is_superuser or request.user.role in {User.Role.TEACHER, User.Role.HOD, User.Role.STAFF, User.Role.ADMIN}):
+        raise PermissionDenied
+    student = get_object_or_404(User, pk=student_id, role=User.Role.STUDENT)
+    if not (request.user.is_superuser or request.user.role == User.Role.ADMIN):
+        if not request.user.org_unit_id or request.user.org_unit_id != student.org_unit_id:
+            raise PermissionDenied("You can only view transcripts for students in your own department.")
+    return render(request, "academics/transcript.html", {
+        "student": student, "transcript": _build_transcript(student), "is_self": False,
+    })

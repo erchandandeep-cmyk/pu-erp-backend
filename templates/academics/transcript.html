@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}{% if is_self %}My Results{% else %}{{ student.get_full_name }}'s Results{% endif %} — PU ERP{% endblock %}
+{% block content %}
+<h2>{% if is_self %}My Results{% else %}{{ student.get_full_name|default:student.username }} — Results{% endif %}</h2>
+
+{% for block in transcript %}
+<div class="card shadow-sm border-0 mb-4"><div class="card-body">
+  <h5>{{ block.enrollment.programme.name }} — {{ block.enrollment.academic_session.name }}</h5>
+  <p class="text-muted mb-3">Roll No: {{ block.enrollment.roll_number|default:"—" }} · Semester {{ block.enrollment.current_semester }}</p>
+
+  {% for c in block.courses %}
+  <h6 class="mt-3">{{ c.course.code }} - {{ c.course.name }}</h6>
+  <table class="table table-sm mb-3">
+    <thead><tr><th>Exam</th><th>Marks</th><th>Percentage</th><th>Result</th><th>Attendance Eligibility</th></tr></thead>
+    <tbody>
+    {% for r in c.results %}
+    <tr>
+      <td>{{ r.exam.get_exam_type_display }}</td>
+      <td>{{ r.marks_obtained|default:"—" }} / {{ r.exam.max_marks }}</td>
+      <td>{{ r.percentage|default:"—" }}{% if r.percentage %}%{% endif %}</td>
+      <td>
+        {% if r.passed == True %}<span class="badge bg-success">Pass</span>
+        {% elif r.passed == False %}<span class="badge bg-danger">Fail</span>
+        {% else %}<span class="text-muted">Not marked</span>{% endif %}
+      </td>
+      <td>{% if r.is_eligible %}<span class="badge bg-success">Eligible</span>{% else %}<span class="badge bg-warning text-dark">Was below minimum</span>{% endif %}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% endfor %}
+</div></div>
+{% empty %}
+<div class="card shadow-sm border-0"><div class="card-body text-center text-muted py-5">
+  No published results yet.
+</div></div>
+{% endfor %}
+{% endblock %}

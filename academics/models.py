@@ -246,3 +246,96 @@ class AttendanceRecord(models.Model):
             raise ValidationError(
                 "Cannot mark attendance for a dropped course registration."
             )
+
+
+class Exam(models.Model):
+    """
+    A single exam event for a course, e.g. 'Mid Semester Exam' for
+    MECH101 in 2026-27. Marks aren't visible to students until an
+    admin/teacher explicitly publishes the exam.
+    """
+
+    class ExamType(models.TextChoices):
+        MID_SEMESTER = "MID_SEMESTER", "Mid Semester"
+        END_SEMESTER = "END_SEMESTER", "End Semester"
+        INTERNAL = "INTERNAL", "Internal Assessment"
+        SUPPLEMENTARY = "SUPPLEMENTARY", "Supplementary / Backlog"
+
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name="exams")
+    academic_session = models.ForeignKey(AcademicSession, on_delete=models.PROTECT, related_name="exams")
+    exam_type = models.CharField(max_length=20, choices=ExamType.choices, default=ExamType.MID_SEMESTER)
+    exam_date = models.DateField()
+    max_marks = models.PositiveSmallIntegerField(default=100)
+    passing_marks = models.PositiveSmallIntegerField(default=40)
+    min_attendance_percent = models.PositiveSmallIntegerField(
+        default=75,
+        help_text="Minimum attendance % required to be eligible to sit this exam.",
+    )
+    is_published = models.BooleanField(
+        default=False,
+        help_text="Students can only see their marks once this is checked.",
+    )
+
+    class Meta:
+        ordering = ["-exam_date"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["course", "academic_session", "exam_type"],
+                name="unique_exam_per_course_session_type",
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.course.code} - {self.get_exam_type_display()} ({self.academic_session.name})"
+
+    def clean(self):
+        if self.passing_marks > self.max_marks:
+            raise ValidationError("Passing marks cannot be greater than max marks.")
+
+
+class ExamResult(models.Model):
+    """
+    One student's result for one exam. `is_eligible` is a snapshot of
+    whether they met the attendance requirement at the time marks were
+    entered - stored (not recalculated live) so a later attendance
+    correction doesn't silently rewrite exam history.
+    """
+
+    exam = models.ForeignKey(Exam, on_delete=models.CASCADE, related_name="results")
+    course_registration = models.ForeignKey(CourseRegistration, on_delete=models.CASCADE, related_name="exam_results")
+    marks_obtained = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
+    is_eligible = models.BooleanField(default=True)
+    attendance_percent_snapshot = models.DecimalField(max_digits=5, decimal_places=1, null=True, blank=True)
+    remarks = models.CharField(max_length=200, blank=True)
+    entered_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name="marks_entered")
+    entered_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["exam", "course_registration"],
+                name="unique_result_per_exam_per_registration",
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.course_registration.student} - {self.exam} - {self.marks_obtained}"
+
+    def clean(self):
+        if self.marks_obtained is not None and self.exam_id and self.marks_obtained > self.exam.max_marks:
+            raise ValidationError(
+                f"Marks obtained ({self.marks_obtained}) cannot exceed the exam's "
+                f"max marks ({self.exam.max_marks})."
+            )
+
+    @property
+    def percentage(self):
+        if self.marks_obtained is None or not self.exam_id or not self.exam.max_marks:
+            return None
+        return round((float(self.marks_obtained) / self.exam.max_marks) * 100, 1)
+
+    @property
+    def passed(self):
+        if self.marks_obtained is None:
+            return None
+        return self.marks_obtained >= self.exam.passing_marks

@@ -28,4 +28,13 @@ urlpatterns = [
     path("attendance/", views.attendance_course_list, name="attendance_course_list"),
     path("attendance/mark/<int:course_id>/", views.attendance_mark, name="attendance_mark"),
     path("attendance/report/<int:course_id>/", views.attendance_report, name="attendance_report"),
+
+    path("exams/", views.exam_list, name="exam_list"),
+    path("exams/new/", views.exam_create, name="exam_create"),
+    path("exams/<int:pk>/edit/", views.exam_edit, name="exam_edit"),
+    path("exams/<int:pk>/toggle-publish/", views.exam_toggle_publish, name="exam_toggle_publish"),
+    path("exams/<int:exam_id>/marks/", views.marks_entry, name="marks_entry"),
+
+    path("transcript/", views.my_transcript, name="my_transcript"),
+    path("transcript/<int:student_id>/", views.student_transcript, name="student_transcript"),
 ]
