@@ -11,11 +11,8 @@ from accounts.services import import_users_from_csv
 from applications.models import Application, ApplicationType
 from announcements.models import Announcement
 from organizations.models import OrgUnit
-<<<<<<< HEAD
 from applications.services import suggest_authority
 from audit.models import AuditLog
-=======
->>>>>>> c7814d027bd91941653a7d1c8217e9a001a0505f
 from .serializers import (
     LoginSerializer, UserSerializer, ApplicationSerializer,
     ApplicationTypeSerializer, AnnouncementSerializer, AuthoritySerializer
@@ -242,7 +239,6 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         from applications.models import ApplicationHistory
         from notifications.models import Notification
         ApplicationHistory.objects.create(application=application, actor=request.user, action=action_name.title(), remark=history_note)
-<<<<<<< HEAD
         AuditLog.objects.create(
             actor=request.user,
             action=f"APPLICATION_{action_name}",
@@ -250,8 +246,6 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             object_id=str(application.pk),
             details=f"{application.application_id}: {history_note} (via mobile app)",
         )
-=======
->>>>>>> c7814d027bd91941653a7d1c8217e9a001a0505f
         Notification.objects.create(user=application.applicant, title=f"Application {action_name.lower()}", message=f"{application.application_id} is now {application.get_status_display()}. {remark}".strip(), link=f"/applications/{application.pk}/")
         if action_name == "FORWARD":
             Notification.objects.create(user=application.authority, title="Application forwarded to you", message=f"{application.application_id}: {application.subject}", link=f"/applications/{application.pk}/")

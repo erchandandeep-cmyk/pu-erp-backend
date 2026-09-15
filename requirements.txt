@@ -5,8 +5,5 @@ whitenoise==6.9.0
 
 djangorestframework==3.16.1
 django-cors-headers==4.7.0
-<<<<<<< HEAD
 openpyxl==3.1.5
-=======
 Pillow==11.0.0
->>>>>>> c7814d027bd91941653a7d1c8217e9a001a0505f
