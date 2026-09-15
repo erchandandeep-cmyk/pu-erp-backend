@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Add Applicant — {{ cycle.name }} — PU ERP{% endblock %}
+{% block content %}
+<h2>Add Applicant to {{ cycle.name }}</h2>
+<div class="card shadow-sm border-0"><div class="card-body">
+<form method="post">
+  {% csrf_token %}
+  <input type="hidden" name="cycle" value="{{ cycle.id }}">
+  {% for field in form %}
+  {% if field.name != "cycle" %}
+  <div class="mb-3">
+    <label class="form-label">{{ field.label }}</label>
+    {{ field }}
+    {% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+  </div>
+  {% endif %}
+  {% endfor %}
+  <button class="btn btn-primary">Add Applicant</button>
+  <a class="btn btn-outline-secondary" href="{% url 'application_list' cycle.pk %}">Cancel</a>
+</form>
+</div></div>
+{% endblock %}

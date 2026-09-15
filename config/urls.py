@@ -27,6 +27,7 @@ urlpatterns = [
     path("accounts/", include("accounts.urls")),
     path("org-units/", include("organizations.urls")),
     path("academics/", include("academics.urls")),
+    path("admissions/", include("admissions.urls")),
     path("applications/", include("applications.urls")),
     path("announcements/", include("announcements.urls")),
     path("documents/", include("documents.urls")),
