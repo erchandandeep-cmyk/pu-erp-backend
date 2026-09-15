@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}{% if mode == "create" %}Add Person{% else %}Edit {{ target.get_full_name }}{% endif %} — ME-ERP{% endblock %}
+{% block content %}
+<h2>{% if mode == "create" %}Add Person{% else %}Edit {{ target.get_full_name|default:target.username }}{% endif %}</h2>
+<p class="text-muted">
+  {% if mode == "create" %}
+  Create one account at a time - for adding many people at once, use
+  <a href="{% url 'import_users' %}">Bulk Import</a> instead.
+  {% else %}
+  Role controls what they can do in the app. Designation is just their job title for display.
+  {% endif %}
+</p>
+<div class="card shadow-sm border-0"><div class="card-body">
+<form method="post">
+  {% csrf_token %}
+  {% for field in form %}
+  <div class="mb-3">
+    <label class="form-label">{{ field.label }}{% if field.field.required %} *{% endif %}</label>
+    {{ field }}
+    {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+    {% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+  </div>
+  {% endfor %}
+  <button class="btn btn-primary">{% if mode == "create" %}Create Account{% else %}Save Changes{% endif %}</button>
+  <a class="btn btn-outline-secondary" href="{% url 'user_list' %}">Cancel</a>
+</form>
+</div></div>
+{% endblock %}

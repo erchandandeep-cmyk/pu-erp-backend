@@ -1,0 +1,66 @@
+STUDENT ENROLLMENT MODULE - HOW TO MERGE
+===========================================
+This is the first real "Student Lifecycle" module (from the audit's P0
+priority list): Academic Sessions, Programmes, and Enrollment - linking
+a student to the programme/session/semester/roll number they're
+actually studying under. This is what future modules (Attendance,
+Examination, Results) will build on top of.
+
+Tested end-to-end: only one "current" session at a time, a student
+can't have two ACTIVE enrollments simultaneously, roll numbers are
+unique per programme, CSV/Excel bulk enrollment, all admin web pages,
+non-admin users correctly blocked (403), and the mobile app's Profile
+screen now shows programme/session/semester/roll number.
+
+===================================================================
+STEP 1 - ADD this whole NEW folder to your ME_ERP project root:
+===================================================================
+academics/            (the entire folder, with all its subfolders)
+
+===================================================================
+STEP 2 - ADD these NEW template files:
+===================================================================
+templates/academics/session_list.html
+templates/academics/session_form.html
+templates/academics/programme_list.html
+templates/academics/programme_form.html
+templates/academics/enrollment_list.html
+templates/academics/enrollment_form.html
+templates/academics/enrollment_import.html
+(create the templates/academics/ folder first)
+
+===================================================================
+STEP 3 - REPLACE these existing files:
+===================================================================
+templates/base.html      (adds 3 new sidebar links for admins)
+config/settings.py       (adds "academics" to INSTALLED_APPS)
+config/urls.py           (adds the academics.urls routes)
+api/serializers.py       (adds current_enrollment to /api/me/)
+
+===================================================================
+STEP 4 - Apply the migration:
+===================================================================
+python manage.py migrate
+
+===================================================================
+STEP 5 - Set up your first real data (as admin, in this order):
+===================================================================
+1. Academic Sessions -> Add Session (e.g. "2026-27")
+2. Programmes -> Add Programme (pick a department, e.g. "B.Tech
+   Mechanical Engineering" under Mechanical Engineering)
+3. Enrollments -> Enroll Student (pick an existing student account,
+   the programme, the session, a roll number)
+   ...or Bulk Import a whole batch via CSV/Excel at once.
+
+===================================================================
+STEP 6 - Push to GitHub so Render redeploys:
+===================================================================
+git add .
+git commit -m "Add Student Enrollment module (sessions, programmes, enrollment)"
+git push
+
+===================================================================
+MOBILE - separate small update, apply to PU-ERP project:
+===================================================================
+Replace: src/screens/ProfileScreen.js
+Then rebuild the APK as usual.

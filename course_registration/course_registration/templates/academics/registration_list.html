@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Course Registrations — ME-ERP{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div><h2>Course Registrations</h2><p class="text-muted">Which courses each student is registered for this session.</p></div>
+  <a class="btn btn-primary" href="{% url 'registration_create' %}">+ Register Student for Course</a>
+</div>
+<form method="get" class="row g-2 mb-3">
+  <div class="col-auto"><input class="form-control" type="text" name="q" value="{{ q }}" placeholder="Search student or course code"></div>
+  <div class="col-auto"><button class="btn btn-outline-secondary">Filter</button></div>
+</form>
+<div class="card shadow-sm border-0"><div class="table-responsive">
+<table class="table table-hover align-middle mb-0">
+<thead><tr><th>Student</th><th>Course</th><th>Session</th><th>Status</th><th style="width:1%"></th></tr></thead>
+<tbody>
+{% for r in registrations %}
+<tr>
+  <td>{{ r.student.get_full_name|default:r.student.username }}</td>
+  <td>{{ r.course.code }} - {{ r.course.name }}</td>
+  <td>{{ r.academic_session.name }}</td>
+  <td>{% if r.status == "REGISTERED" %}<span class="badge bg-success">Registered</span>{% else %}<span class="badge bg-secondary">Dropped</span>{% endif %}</td>
+  <td><a class="btn btn-sm btn-outline-primary" href="{% url 'registration_edit' r.pk %}">Edit</a></td>
+</tr>
+{% empty %}
+<tr><td colspan="5" class="text-center text-muted py-4">No course registrations yet.</td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div></div>
+{% endblock %}

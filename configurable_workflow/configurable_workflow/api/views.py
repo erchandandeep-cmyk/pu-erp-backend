@@ -11,11 +11,7 @@ from accounts.services import import_users_from_csv
 from applications.models import Application, ApplicationType
 from announcements.models import Announcement
 from organizations.models import OrgUnit
-<<<<<<< HEAD
 from applications.services import suggest_authority
-from audit.models import AuditLog
-=======
->>>>>>> c7814d027bd91941653a7d1c8217e9a001a0505f
 from .serializers import (
     LoginSerializer, UserSerializer, ApplicationSerializer,
     ApplicationTypeSerializer, AnnouncementSerializer, AuthoritySerializer
@@ -96,42 +92,6 @@ def suggest_authority_api(request):
     return Response({"authority": AuthoritySerializer(match).data})
 
 
-@api_view(["GET"])
-@permission_classes([IsAuthenticated])
-def my_results_api(request):
-    from accounts.models import User
-    if request.user.role != User.Role.STUDENT:
-        return Response({"detail": "Only students have results here."}, status=status.HTTP_403_FORBIDDEN)
-    from academics.views import _build_transcript
-    transcript = _build_transcript(request.user)
-    data = []
-    for block in transcript:
-        courses = []
-        for c in block["courses"]:
-            courses.append({
-                "course_code": c["course"].code,
-                "course_name": c["course"].name,
-                "results": [
-                    {
-                        "exam_type": r["exam"].get_exam_type_display(),
-                        "marks_obtained": r["marks_obtained"],
-                        "max_marks": r["exam"].max_marks,
-                        "percentage": r["percentage"],
-                        "passed": r["passed"],
-                        "is_eligible": r["is_eligible"],
-                    }
-                    for r in c["results"]
-                ],
-            })
-        data.append({
-            "programme": block["enrollment"].programme.name,
-            "academic_session": block["enrollment"].academic_session.name,
-            "roll_number": block["enrollment"].roll_number,
-            "courses": courses,
-        })
-    return Response(data)
-
-
 class ApplicationTypeViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = ApplicationType.objects.filter(active=True).order_by("name")
     serializer_class = ApplicationTypeSerializer
@@ -172,14 +132,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         return super().create(request, *args, **kwargs)
 
     def perform_create(self, serializer):
-        obj = serializer.save(applicant=self.request.user)
-        AuditLog.objects.create(
-            actor=self.request.user,
-            action="APPLICATION_SUBMITTED",
-            object_type="Application",
-            object_id=str(obj.pk),
-            details=f"{obj.application_id} (via mobile app)",
-        )
+        serializer.save(applicant=self.request.user)
 
     def update(self, request, *args, **kwargs):
         if request.user.role not in {User.Role.TEACHER, User.Role.STAFF, User.Role.HOD, User.Role.ADMIN} and not request.user.is_superuser:
@@ -242,16 +195,6 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         from applications.models import ApplicationHistory
         from notifications.models import Notification
         ApplicationHistory.objects.create(application=application, actor=request.user, action=action_name.title(), remark=history_note)
-<<<<<<< HEAD
-        AuditLog.objects.create(
-            actor=request.user,
-            action=f"APPLICATION_{action_name}",
-            object_type="Application",
-            object_id=str(application.pk),
-            details=f"{application.application_id}: {history_note} (via mobile app)",
-        )
-=======
->>>>>>> c7814d027bd91941653a7d1c8217e9a001a0505f
         Notification.objects.create(user=application.applicant, title=f"Application {action_name.lower()}", message=f"{application.application_id} is now {application.get_status_display()}. {remark}".strip(), link=f"/applications/{application.pk}/")
         if action_name == "FORWARD":
             Notification.objects.create(user=application.authority, title="Application forwarded to you", message=f"{application.application_id}: {application.subject}", link=f"/applications/{application.pk}/")

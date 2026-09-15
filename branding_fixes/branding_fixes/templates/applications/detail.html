@@ -1,0 +1,1304 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="print-content">
+    <!-- ===================================================== -->
+<!-- PRINT-ONLY OFFICIAL HEADER -->
+<!-- ===================================================== -->
+
+<div class="print-header">
+
+    <div class="print-header-title">
+        PUNJABI UNIVERSITY PATIALA
+    </div>
+
+    <div class="print-header-department">
+        {{ application.applicant.org_unit.name|default:application.applicant.department }}
+    </div>
+
+    <div class="print-header-system">
+        Punjabi University ERP — OFFICIAL APPLICATION RECORD
+    </div>
+
+    <div class="print-header-line"></div>
+
+    <div class="print-document-title">
+        APPLICATION RECORD
+    </div>
+
+</div>
+<div class="d-flex justify-content-between align-items-center">
+
+    <h2>{{ application.subject }}</h2>
+
+    <div class="d-flex align-items-center gap-2">
+
+        <span class="badge bg-primary p-2">
+            {{ application.get_status_display }}
+        </span>
+
+        <!-- PDF BUTTON -->
+        <a
+            href="{% url 'application_pdf' application.pk %}"
+            target="_blank"
+            class="btn btn-danger">
+
+            📄 View / Print PDF
+
+        </a>
+
+        <!-- BROWSER PRINT BUTTON -->
+        <button
+            type="button"
+            class="btn btn-outline-dark"
+            onclick="window.print()">
+
+            🖨️ Print Application
+
+        </button>
+
+    </div>
+
+</div>
+
+<p class="text-muted">
+    {{ application.application_id }}
+</p>
+
+
+<!-- ===================================================== -->
+<!-- APPLICATION DETAILS -->
+<!-- ===================================================== -->
+
+<div class="card shadow-sm border-0 mb-4">
+
+    <div class="card-body">
+
+        <p>
+            <strong>Applicant:</strong>
+            {{ application.applicant.display_name }}
+        </p>
+
+        <p>
+            <strong>Type:</strong>
+            {{ application.application_type.name }}
+        </p>
+
+        <p>
+            <strong>Authority:</strong>
+            {{ application.authority.display_name|default:"Not assigned" }}
+        </p>
+
+        <p>
+            <strong>Submitted:</strong>
+            {{ application.created_at }}
+        </p>
+
+        <hr>
+
+        <p>
+            {{ application.body|linebreaksbr }}
+        </p>
+
+        {% if application.attachment %}
+
+            <a href="{{ application.attachment.url }}"
+               class="btn btn-outline-primary">
+
+                View attachment
+
+            </a>
+
+        {% endif %}
+
+        {% if application.current_remark %}
+
+            <div class="alert alert-info mt-3">
+
+                <strong>Latest remark:</strong>
+
+                {{ application.current_remark }}
+
+            </div>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+
+<!-- ===================================================== -->
+<!-- APPLICATION TIMELINE -->
+<!-- ===================================================== -->
+
+<div class="card shadow-sm border-0 mb-4">
+
+    <div class="card-body">
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+
+            <div>
+
+                <h4 class="mb-1">
+                    Application Timeline
+                </h4>
+
+                <p class="text-muted mb-0">
+                    Complete history of this application
+                </p>
+
+            </div>
+
+            <span class="badge bg-primary p-2">
+                {{ application.get_status_display }}
+            </span>
+
+        </div>
+
+
+        {% if history %}
+
+            <div class="application-timeline">
+
+                {% for h in history %}
+
+                    <div class="timeline-item">
+
+                        <!-- ================================================= -->
+                        <!-- TIMELINE MARKER -->
+                        <!-- ================================================= -->
+
+                        <div class="timeline-marker">
+
+                            {% if forloop.last %}
+                                ●
+                            {% else %}
+                                ✓
+                            {% endif %}
+
+                        </div>
+
+
+                        <!-- ================================================= -->
+                        <!-- TIMELINE CONTENT -->
+                        <!-- ================================================= -->
+
+                        <div class="timeline-content">
+
+                            <div class="d-flex justify-content-between align-items-start flex-wrap">
+
+                                <div>
+
+                                    <h5 class="mb-1">
+                                        {{ h.action }}
+                                    </h5>
+
+                                    <p class="mb-1 text-muted">
+
+                                        By:
+
+                                        <strong>
+                                            {{ h.actor.display_name }}
+                                        </strong>
+
+                                    </p>
+
+                                </div>
+
+
+                                <small class="text-muted">
+
+                                    {{ h.created_at|date:"d M Y, h:i A" }}
+
+                                </small>
+
+                            </div>
+
+
+                            {% if h.remark %}
+
+                                <div class="alert alert-light border mt-2 mb-0">
+
+                                    <strong>
+                                        Remark:
+                                    </strong>
+
+                                    {{ h.remark }}
+
+                                </div>
+
+                            {% endif %}
+
+                        </div>
+
+                    </div>
+
+                {% endfor %}
+
+            </div>
+
+        {% else %}
+
+            <div class="text-center py-4">
+
+                <p class="text-muted mb-0">
+                    No application history available.
+                </p>
+
+            </div>
+
+        {% endif %}
+
+    </div>
+
+</div>
+<!-- ===================================================== -->
+<!-- PRINT-ONLY SIGNATURE SECTION -->
+<!-- ===================================================== -->
+
+<div class="print-signature-section">
+
+    <div class="signature-title">
+        Signatures / Approval
+    </div>
+
+    <div class="signature-grid">
+
+        {% for h in history %}
+
+            {% if h.actor.role == "TEACHER" or h.actor.role == "STAFF" or h.actor.role == "HOD" %}
+
+                {% if h.action == "Approved" or h.action == "Rejected" or h.action == "Marked under review" or h.action == "Completed" %}
+
+                    {% if h.actor.signature %}
+
+                        <div class="signature-box">
+
+                            <img
+                                src="{{ h.actor.signature.url }}"
+                                class="printed-signature"
+                                alt="{{ h.actor.get_role_display }} Signature"
+                            >
+
+                            <div class="signature-line"></div>
+
+                            <strong>
+                                {{ h.actor.display_name }}
+                            </strong>
+
+                            <div class="signature-label">
+                                {{ h.actor.get_role_display }}
+                            </div>
+
+                        </div>
+
+                    {% endif %}
+
+                {% endif %}
+
+            {% endif %}
+
+        {% endfor %}
+
+    </div>
+
+</div>
+
+<!-- ===================================================== -->
+<!-- TIMELINE STYLE -->
+<!-- ===================================================== -->
+
+<style>
+
+.application-timeline {
+
+    position: relative;
+
+    margin-left: 10px;
+
+    padding-left: 35px;
+
+}
+
+
+/* Vertical timeline line */
+
+.application-timeline::before {
+
+    content: "";
+
+    position: absolute;
+
+    left: 12px;
+
+    top: 5px;
+
+    bottom: 5px;
+
+    width: 2px;
+
+    background: #dee2e6;
+
+}
+
+
+/* Individual timeline item */
+
+.timeline-item {
+
+    position: relative;
+
+    display: flex;
+
+    margin-bottom: 25px;
+
+}
+
+
+/* Remove bottom spacing from last item */
+
+.timeline-item:last-child {
+
+    margin-bottom: 0;
+
+}
+
+
+/* Timeline circle */
+
+.timeline-marker {
+
+    position: absolute;
+
+    left: -35px;
+
+    top: 0;
+
+    width: 26px;
+
+    height: 26px;
+
+    border-radius: 50%;
+
+    background: #0d6efd;
+
+    color: white;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    font-size: 14px;
+
+    font-weight: bold;
+
+    z-index: 2;
+
+}
+
+
+/* Timeline content box */
+
+.timeline-content {
+
+    width: 100%;
+
+    padding: 15px;
+
+    border: 1px solid #e9ecef;
+
+    border-radius: 10px;
+
+    background: #ffffff;
+
+}
+
+
+/* Mobile view */
+
+@media (max-width: 576px) {
+
+    .application-timeline {
+
+        margin-left: 5px;
+
+        padding-left: 30px;
+
+    }
+
+    .timeline-marker {
+
+        left: -30px;
+
+    }
+
+}
+/* ===================================================== */
+/* PRINT SIGNATURE SECTION */
+/* ===================================================== */
+
+.print-signature-section {
+    display: none;
+}
+/* ===================================================== */
+/* PRINT HEADER */
+/* ===================================================== */
+
+.print-header {
+    display: none;
+}
+
+.print-header-title {
+    text-align: center;
+    font-size: 22px;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+}
+
+.print-header-department {
+    text-align: center;
+    font-size: 17px;
+    font-weight: 600;
+    margin-top: 4px;
+}
+
+.print-header-system {
+    text-align: center;
+    font-size: 13px;
+    margin-top: 5px;
+    letter-spacing: 0.5px;
+}
+
+.print-header-line {
+    border-top: 2px solid #000;
+    margin-top: 14px;
+}
+
+.print-document-title {
+    text-align: center;
+    font-size: 18px;
+    font-weight: bold;
+    margin-top: 12px;
+    margin-bottom: 25px;
+}
+
+/* ===================================================== */
+/* SIGNATURES WHEN PRINTING */
+/* ===================================================== */
+
+@media print {  
+    .print-header {
+    display: block !important;
+}
+        .printed-signature {
+        display: block;
+        max-width: 150px;
+        max-height: 60px;
+        margin: 0 auto 8px auto;
+        object-fit: contain;
+    }
+        /* ===================================================== */
+    /* PRINT ONLY APPLICATION CONTENT */
+    /* ===================================================== */
+
+    body * {
+        visibility: hidden !important;
+    }
+
+    .print-content,
+    .print-content * {
+        visibility: visible !important;
+    }
+
+    .print-content {
+        position: absolute !important;
+        left: 0 !important;
+        top: 0 !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+        .no-print {
+        display: none !important;
+    }
+      /* Hide website controls during printing */
+
+
+    button,
+    form,
+    nav,
+    .navbar {
+        display: none !important;
+    }
+
+    /* Hide buttons/links used for website navigation */
+
+    a.btn {
+        display: none !important;
+    }
+
+    /* Clean print background */
+
+    body {
+        background: white !important;
+    }
+
+    /* Remove card shadows */
+
+    .card {
+        box-shadow: none !important;
+    }
+
+    .print-signature-section {
+        display: block !important;
+        margin-top: 25px;
+        page-break-inside: auto;
+        break-inside: auto;
+    }
+
+    .signature-title {
+        text-align: center;
+        font-size: 18px;
+        font-weight: bold;
+        margin-bottom: 20px;
+        border-bottom: 1px solid #000;
+        padding-bottom: 8px;
+    }
+
+    .signature-grid {
+        display: flex;
+        justify-content: space-between;
+        gap: 35px;
+    }
+
+    .signature-box {
+        width: 30%;
+        text-align: center;
+        min-height: 100px;
+    }
+
+    .signature-space {
+        height: 30px;
+    }
+
+    .signature-line {
+        border-top: 1px solid #000;
+        margin-bottom: 8px;
+    }
+
+    .signature-label {
+        font-size: 13px;
+        margin-top: 3px;
+    }
+    /* ===================================================== */
+    /* COMPACT PRINT LAYOUT */
+    /* ===================================================== */
+
+    .print-content {
+        font-size: 13px !important;
+        line-height: 1.3 !important;
+    }
+
+    .print-content h2 {
+        font-size: 20px !important;
+        margin-bottom: 4px !important;
+    }
+
+    .print-content h4 {
+        font-size: 16px !important;
+        margin-bottom: 5px !important;
+    }
+
+    .print-content h5 {
+        font-size: 14px !important;
+    }
+
+    .print-content p {
+        margin-bottom: 6px !important;
+    }
+
+    .print-content .card {
+        margin-bottom: 12px !important;
+    }
+
+    .print-content .card-body {
+        padding: 12px !important;
+    }
+
+    .timeline-item {
+        margin-bottom: 12px !important;
+    }
+
+    .timeline-content {
+        padding: 9px !important;
+    }
+
+    .timeline-content .alert {
+        margin-top: 4px !important;
+        padding: 6px !important;
+    }
+
+    .print-signature-section {
+        margin-top: 15px !important;
+    }
+
+    .signature-title {
+        margin-bottom: 12px !important;
+    }
+
+    .signature-space {
+        height: 20px !important;
+    }
+
+    .signature-box {
+        min-height: 70px !important;
+    }
+}
+</style>
+
+
+<!-- ===================================================== -->
+<!-- PROCESS APPLICATION -->
+<!-- ===================================================== -->
+
+{% if user.role == "TEACHER" or user.role == "STAFF" or user.role == "HOD" or user.role == "ADMIN" or user.is_superuser %}
+
+<div class="card shadow-sm border-0 no-print">
+
+    <div class="card-body">
+
+        <h5 class="mb-3">
+            Process Application
+        </h5>
+
+
+        <!-- ================================================= -->
+        <!-- UNDER REVIEW -->
+        <!-- ================================================= -->
+
+        <form method="post"
+              action="{% url 'application_action' application.pk 'review' %}"
+              class="mb-3">
+
+            {% csrf_token %}
+
+            <input
+                name="remark"
+                class="form-control mb-2"
+                placeholder="Remark (optional)"
+            >
+
+            <button
+                type="submit"
+                class="btn btn-outline-primary">
+
+                Mark Under Review
+
+            </button>
+
+        </form>
+
+
+        <!-- ================================================= -->
+        <!-- APPROVE / REJECT / COMPLETE / ARCHIVE -->
+        <!-- ================================================= -->
+
+        <div class="d-flex gap-2 flex-wrap mb-4">
+
+
+            <!-- APPROVE -->
+
+            <form method="post"
+                  action="{% url 'application_action' application.pk 'approve' %}">
+
+                {% csrf_token %}
+
+                <button
+                    type="submit"
+                    class="btn btn-success">
+
+                    Approve
+
+                </button>
+
+            </form>
+
+
+            <!-- REJECT -->
+
+            <form method="post"
+                  action="{% url 'application_action' application.pk 'reject' %}">
+
+                {% csrf_token %}
+
+                <button
+                    type="submit"
+                    class="btn btn-danger">
+
+                    Reject
+
+                </button>
+
+            </form>
+
+
+            <!-- COMPLETE -->
+
+            <form method="post"
+                  action="{% url 'application_action' application.pk 'complete' %}">
+
+                {% csrf_token %}
+
+                <button
+                    type="submit"
+                    class="btn btn-dark">
+
+                    Complete
+
+                </button>
+
+            </form>
+
+
+            <!-- ================================================= -->
+            <!-- ARCHIVE APPLICATION -->
+            <!-- ================================================= -->
+
+            {% if user.role == "HOD" or user.role == "ADMIN" or user.is_superuser %}
+
+                {% if application.status == "APPROVED" or application.status == "REJECTED" %}
+
+                    <form method="post"
+                          action="{% url 'application_action' application.pk 'archive' %}"
+                          onsubmit="return confirm('Are you sure you want to archive this application?');">
+
+                        {% csrf_token %}
+
+                        <button
+                            type="submit"
+                            class="btn btn-secondary">
+
+                            Archive Application
+
+                        </button>
+
+                    </form>
+
+                {% endif %}
+
+            {% endif %}
+
+        </div>
+
+
+        <!-- ================================================= -->
+        <!-- FORWARD APPLICATION -->
+        <!-- ================================================= -->
+
+        {% if user.role == "TEACHER" or user.role == "STAFF" or user.role == "HOD" or user.role == "ADMIN" or user.is_superuser %}
+
+        <div class="card border-warning no-print">
+
+            <div class="card-body">
+
+                <h5 class="card-title">
+                    Forward Application
+                </h5>
+
+                <p class="text-muted">
+                    Select a role and then select the specific person
+                    to whom this application should be forwarded.
+                </p>
+
+
+                <form method="post"
+                      action="{% url 'application_action' application.pk 'forward' %}">
+
+                    {% csrf_token %}
+
+
+                    <!-- ================================================= -->
+                    <!-- FORWARD TO ROLE -->
+                    <!-- ================================================= -->
+
+                    <div class="mb-3">
+
+                        <label class="form-label">
+
+                            <strong>
+                                Forward To
+                            </strong>
+
+                        </label>
+
+                        <select
+                            name="forward_to"
+                            id="forward_role"
+                            class="form-select"
+                            required>
+
+                            <option value="">
+                                -- Select Role --
+                            </option>
+
+
+                            <!-- TEACHER OPTIONS -->
+
+                            {% if user.role == "HOD" or user.role == "ADMIN" or user.is_superuser %}
+
+                                <option value="TEACHER">
+                                    Teacher
+                                </option>
+
+                            {% endif %}
+
+
+                            <!-- STAFF OPTIONS -->
+
+                            {% if user.role == "TEACHER" or user.role == "HOD" or user.role == "ADMIN" or user.is_superuser %}
+
+                                <option value="STAFF">
+                                    Staff
+                                </option>
+
+                            {% endif %}
+
+
+                            <!-- HOD OPTIONS -->
+
+                            {% if user.role == "TEACHER" or user.role == "STAFF" or user.role == "HOD" or user.role == "ADMIN" or user.is_superuser %}
+
+                                <option value="HOD">
+                                    HOD
+                                </option>
+
+                            {% endif %}
+
+                        </select>
+
+                    </div>
+
+
+                    <!-- ================================================= -->
+                    <!-- SEARCH PERSON -->
+                    <!-- ================================================= -->
+
+                    <div class="mb-3">
+
+                        <label class="form-label">
+
+                            <strong>
+                                Select Person
+                            </strong>
+
+                        </label>
+
+
+                        <!-- Search box -->
+
+                        <input
+                            type="text"
+                            id="personSearch"
+                            class="form-control mb-2"
+                            placeholder="Search person by name..."
+                            autocomplete="off"
+                            disabled
+                        >
+
+
+                        <!-- Person dropdown -->
+
+                        <select
+                            name="forward_user"
+                            id="authority_id"
+                            class="form-select"
+                            required
+                            disabled>
+
+                            <option value="">
+                                -- Select Person --
+                            </option>
+
+
+                            <!-- ================================================= -->
+                            <!-- TEACHERS -->
+                            <!-- ================================================= -->
+
+                            {% for person in forward_teacher %}
+
+                                <option
+                                    value="{{ person.id }}"
+                                    data-role="TEACHER">
+
+                                    {{ person.get_full_name|default:person.username }}
+                                    — Teacher
+
+                                    {% if person.department %}
+                                        • {{ person.department }}
+                                    {% endif %}
+
+                                </option>
+
+                            {% endfor %}
+
+
+                            <!-- ================================================= -->
+                            <!-- STAFF -->
+                            <!-- ================================================= -->
+
+                            {% for person in forward_staff %}
+
+                                <option
+                                    value="{{ person.id }}"
+                                    data-role="STAFF">
+
+                                    {{ person.get_full_name|default:person.username }}
+                                    — Staff
+
+                                    {% if person.department %}
+                                        • {{ person.department }}
+                                    {% endif %}
+
+                                </option>
+
+                            {% endfor %}
+
+
+                            <!-- ================================================= -->
+                            <!-- HOD -->
+                            <!-- ================================================= -->
+
+                            {% for person in forward_hod %}
+
+                                <option
+                                    value="{{ person.id }}"
+                                    data-role="HOD">
+
+                                    {{ person.get_full_name|default:person.username }}
+                                    — HOD
+
+                                    {% if person.department %}
+                                        • {{ person.department }}
+                                    {% endif %}
+
+                                </option>
+
+                            {% endfor %}
+
+                        </select>
+
+                    </div>
+
+
+                    <!-- ================================================= -->
+                    <!-- REMARK -->
+                    <!-- ================================================= -->
+
+                    <div class="mb-3">
+
+                        <label class="form-label">
+
+                            <strong>
+                                Remark
+                            </strong>
+
+                        </label>
+
+                        <textarea
+                            name="remark"
+                            class="form-control"
+                            rows="3"
+                            placeholder="Enter a remark (optional)"
+                        ></textarea>
+
+                    </div>
+
+
+                    <!-- ================================================= -->
+                    <!-- FORWARD BUTTON -->
+                    <!-- ================================================= -->
+
+                    <button
+                        type="submit"
+                        class="btn btn-warning">
+
+                        Forward Application
+
+                    </button>
+
+                </form>
+
+            </div>
+
+        </div>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+{% endif %}
+
+
+<!-- ===================================================== -->
+<!-- FORWARD PERSON SEARCH + ROLE FILTER -->
+<!-- ===================================================== -->
+
+<script>
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    const roleSelect =
+        document.getElementById("forward_role");
+
+    const personSelect =
+        document.getElementById("authority_id");
+
+    const searchBox =
+        document.getElementById("personSearch");
+
+
+    if (!roleSelect || !personSelect || !searchBox) {
+        return;
+    }
+
+
+    /*
+     * Store all available people.
+     */
+
+    const allPeople = Array.from(
+        personSelect.options
+    )
+    .filter(function (option) {
+
+        return option.value !== "";
+
+    })
+    .map(function (option) {
+
+        return {
+            value: option.value,
+            text: option.textContent.trim(),
+            role: option.dataset.role
+        };
+
+    });
+
+
+    /*
+     * Initially disable person selection.
+     */
+
+    personSelect.disabled = true;
+    searchBox.disabled = true;
+
+
+    /*
+     * When role changes.
+     */
+
+    roleSelect.addEventListener(
+        "change",
+        function () {
+
+            const selectedRole =
+                this.value;
+
+
+            /*
+             * Clear dropdown.
+             */
+
+            personSelect.innerHTML = "";
+
+
+            /*
+             * Default option.
+             */
+
+            const defaultOption =
+                document.createElement("option");
+
+            defaultOption.value = "";
+
+            defaultOption.textContent =
+                "-- Select Person --";
+
+            personSelect.appendChild(
+                defaultOption
+            );
+
+
+            /*
+             * No role selected.
+             */
+
+            if (!selectedRole) {
+
+                personSelect.disabled = true;
+
+                searchBox.disabled = true;
+
+                searchBox.value = "";
+
+                return;
+
+            }
+
+
+            /*
+             * Enable controls.
+             */
+
+            personSelect.disabled = false;
+            searchBox.disabled = false;
+
+
+            /*
+             * Add matching people.
+             */
+
+            allPeople.forEach(
+                function (person) {
+
+                    if (
+                        person.role ===
+                        selectedRole
+                    ) {
+
+                        const option =
+                            document.createElement(
+                                "option"
+                            );
+
+                        option.value =
+                            person.value;
+
+                        option.textContent =
+                            person.text;
+
+                        option.dataset.role =
+                            person.role;
+
+                        personSelect.appendChild(
+                            option
+                        );
+
+                    }
+
+                }
+            );
+
+        }
+    );
+
+
+    /*
+     * Search people by name.
+     */
+
+    searchBox.addEventListener(
+        "input",
+        function () {
+
+            const searchText =
+                this.value
+                .toLowerCase()
+                .trim();
+
+
+            const selectedRole =
+                roleSelect.value;
+
+
+            /*
+             * Clear dropdown.
+             */
+
+            personSelect.innerHTML = "";
+
+
+            /*
+             * Default option.
+             */
+
+            const defaultOption =
+                document.createElement("option");
+
+            defaultOption.value = "";
+
+            defaultOption.textContent =
+                searchText
+                    ? "-- Select matching person --"
+                    : "-- Select Person --";
+
+            personSelect.appendChild(
+                defaultOption
+            );
+
+
+            /*
+             * Filter people.
+             */
+
+            allPeople.forEach(
+                function (person) {
+
+                    if (
+                        person.role !==
+                        selectedRole
+                    ) {
+
+                        return;
+
+                    }
+
+
+                    if (
+                        searchText &&
+                        !person.text
+                            .toLowerCase()
+                            .includes(searchText)
+                    ) {
+
+                        return;
+
+                    }
+
+
+                    const option =
+                        document.createElement(
+                            "option"
+                        );
+
+                    option.value =
+                        person.value;
+
+                    option.textContent =
+                        person.text;
+
+                    option.dataset.role =
+                        person.role;
+
+
+                    personSelect.appendChild(
+                        option
+                    );
+
+                }
+            );
+
+        }
+    );
+
+});
+
+</script>
+
+</div>
+{% endblock %}

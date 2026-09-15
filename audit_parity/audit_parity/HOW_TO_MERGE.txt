@@ -1,0 +1,19 @@
+AUDIT LOG PARITY (MOBILE) - HOW TO MERGE
+===========================================
+Fixes a real gap found by your APK analysis document: the audit log
+existed and was already used on the website (application submit,
+approve/reject/forward, announcements) - but NOT when the same actions
+happened through the mobile app. Now both write to the same audit log.
+Tested: submitting and approving an application via the mobile API
+now both create AuditLog entries, verified against the database.
+
+Replace this file at the same path in ME_ERP:
+  api/views.py
+
+No migration needed - AuditLog already existed, this just calls it
+from two more places.
+
+Push to GitHub afterward:
+  git add .
+  git commit -m "Log mobile application actions to the audit trail too"
+  git push

@@ -1,0 +1,71 @@
+REBRANDING + TEST ACCOUNTS - HOW TO MERGE
+============================================
+Two things in this patch:
+
+1. Every page that said "ME-ERP" now says "PU ERP" (matches your
+   mobile app's name). Also fixed a REAL bug (not just cosmetic): the
+   application detail page, PDF export, and a legacy "department"
+   field default were hardcoded to "Mechanical Engineering" for EVERY
+   user regardless of their actual department - a Chemistry student's
+   official record would have wrongly shown "Mechanical Engineering."
+   Now pulls the real department dynamically. Tested.
+
+2. seed_test_users now creates 7 accounts (all password TestPass123):
+   test_student, test_teacher, test_hod (same department as each
+   other), test_registrar, test_vc, test_dean_academic,
+   test_dean_colleges. All tested logging in successfully with correct
+   office assignments.
+
+HOW TO APPLY - this touches MANY files, easiest done with a script.
+Extract this zip to your Desktop, check nesting with `dir` as usual,
+then from your ME_ERP folder run:
+
+set SRC=C:\Users\Seerat-Aarav\OneDrive\Desktop\rebrand_and_test_accounts\rebrand_and_test_accounts
+
+copy /Y "%SRC%\accounts\models.py" "accounts\models.py"
+copy /Y "%SRC%\accounts\views.py" "accounts\views.py"
+copy /Y "%SRC%\accounts\services.py" "accounts\services.py"
+copy /Y "%SRC%\accounts\migrations\0005_alter_user_department.py" "accounts\migrations\0005_alter_user_department.py"
+copy /Y "%SRC%\academics\management\commands\seed_test_users.py" "academics\management\commands\seed_test_users.py"
+copy /Y "%SRC%\applications\management\commands\seed_demo.py" "applications\management\commands\seed_demo.py"
+
+copy /Y "%SRC%\templates\base.html" "templates\base.html"
+copy /Y "%SRC%\templates\dashboard\dashboard.html" "templates\dashboard\dashboard.html"
+copy /Y "%SRC%\templates\notifications\list.html" "templates\notifications\list.html"
+copy /Y "%SRC%\templates\applications\form.html" "templates\applications\form.html"
+copy /Y "%SRC%\templates\applications\application_pdf.html" "templates\applications\application_pdf.html"
+
+copy /Y "%SRC%\templates\organizations\org_unit_form.html" "templates\organizations\org_unit_form.html"
+copy /Y "%SRC%\templates\organizations\org_unit_import.html" "templates\organizations\org_unit_import.html"
+copy /Y "%SRC%\templates\organizations\org_unit_list.html" "templates\organizations\org_unit_list.html"
+
+copy /Y "%SRC%\templates\accounts\import_users.html" "templates\accounts\import_users.html"
+copy /Y "%SRC%\templates\accounts\user_delete_confirm.html" "templates\accounts\user_delete_confirm.html"
+copy /Y "%SRC%\templates\accounts\user_form.html" "templates\accounts\user_form.html"
+copy /Y "%SRC%\templates\accounts\user_list.html" "templates\accounts\user_list.html"
+copy /Y "%SRC%\templates\accounts\user_set_password.html" "templates\accounts\user_set_password.html"
+
+copy /Y "%SRC%\templates\academics\attendance_course_list.html" "templates\academics\attendance_course_list.html"
+copy /Y "%SRC%\templates\academics\attendance_mark.html" "templates\academics\attendance_mark.html"
+copy /Y "%SRC%\templates\academics\attendance_report.html" "templates\academics\attendance_report.html"
+copy /Y "%SRC%\templates\academics\course_form.html" "templates\academics\course_form.html"
+copy /Y "%SRC%\templates\academics\course_list.html" "templates\academics\course_list.html"
+copy /Y "%SRC%\templates\academics\enrollment_form.html" "templates\academics\enrollment_form.html"
+copy /Y "%SRC%\templates\academics\enrollment_import.html" "templates\academics\enrollment_import.html"
+copy /Y "%SRC%\templates\academics\enrollment_list.html" "templates\academics\enrollment_list.html"
+copy /Y "%SRC%\templates\academics\exam_form.html" "templates\academics\exam_form.html"
+copy /Y "%SRC%\templates\academics\exam_list.html" "templates\academics\exam_list.html"
+copy /Y "%SRC%\templates\academics\marks_entry.html" "templates\academics\marks_entry.html"
+copy /Y "%SRC%\templates\academics\programme_form.html" "templates\academics\programme_form.html"
+copy /Y "%SRC%\templates\academics\programme_list.html" "templates\academics\programme_list.html"
+copy /Y "%SRC%\templates\academics\registration_form.html" "templates\academics\registration_form.html"
+copy /Y "%SRC%\templates\academics\registration_list.html" "templates\academics\registration_list.html"
+copy /Y "%SRC%\templates\academics\session_form.html" "templates\academics\session_form.html"
+copy /Y "%SRC%\templates\academics\session_list.html" "templates\academics\session_list.html"
+
+Then:
+python manage.py migrate
+python manage.py seed_test_users
+git add .
+git commit -m "Rebrand ME-ERP to PU ERP everywhere; fix hardcoded department bug; add full test account set"
+git push
